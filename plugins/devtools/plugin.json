@@ -1,0 +1,59 @@
+﻿{
+  "id": "devtools",
+  "name": "Built-in DevTools",
+  "version": "1.0.0",
+  "description": "Enables Unity Hub's own debug helper, right-click inspection, and optional window tweaks.",
+  "config": [
+    {
+      "key": "openDevToolsOnStart",
+      "type": "checkbox",
+      "label": "Open DevTools on startup",
+      "description": "Open DevTools Window automatically when Unity Hub starts.",
+      "default": false
+    },
+    {
+      "key": "enableRightClickInspect",
+      "type": "checkbox",
+      "label": "Enable right-click inspect menu",
+      "description": "Add a Unity Hub developer context menu with Inspect Element.",
+      "default": true
+    },
+    {
+      "key": "disableMinimumWindowSize",
+      "type": "checkbox",
+      "label": "Disable minimum window size",
+      "description": "Allow Unity Hub windows to be resized below Unity's built-in minimum size.",
+      "default": false
+    },
+    {
+      "key": "useNativeWindowsTitleBar",
+      "type": "checkbox",
+      "label": "Use Windows native title bar",
+      "description": "Use the normal Windows title bar instead of Unity Hub's custom frameless title bar.",
+      "default": false
+    }
+  ],
+  "replacements": [
+    {
+      "filePattern": "build/main/app-*.js",
+      "find": "initElectronDebug();",
+      "replace": "installUnifyHubDevTools();",
+      "alreadyPatchedFind": "installUnifyHubDevTools();",
+      "once": true
+    },
+    {
+      "filePattern": "build/main/app-*.js",
+      "find": "}\n//#endregion\n//#region src/types/modules/main-services.ts",
+      "replaceFromFile": "patches/context-menu-main.js.txt",
+      "alreadyPatchedFind": "function applyUnifyHubWindowTweaks(",
+      "once": true
+    },
+    {
+      "filePattern": "build/main/app-*.js",
+      "find": "\t\tthis.browserWindow = new BrowserWindow(options);",
+      "replace": "\t\tapplyUnifyHubWindowTweaks(options);\n\t\tthis.browserWindow = new BrowserWindow(options);\n\t\tinstallUnifyHubNativeTitleBarStyle(this.browserWindow, options);",
+      "alreadyPatchedFind": "applyUnifyHubWindowTweaks(options);",
+      "once": true
+    }
+  ]
+}

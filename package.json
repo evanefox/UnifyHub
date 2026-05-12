@@ -1,0 +1,29 @@
+{
+  "name": "unify-hub",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Experimental Unity Hub renderer mod injector using Electron remote debugging.",
+  "scripts": {
+    "start": "node src/launcher.mjs",
+    "inject": "node src/injector.mjs",
+    "recon": "node src/recon-asar.mjs",
+    "devtools:build": "node src/unifyhub.mjs build --target dev --plugins plugin-manager,devtools",
+    "devtools:install": "node src/unifyhub.mjs apply --target dev --plugins plugin-manager,devtools",
+    "devtools:restore": "node src/unifyhub.mjs restore --target dev",
+    "container": "node src/unifyhub.mjs",
+    "container:build": "node src/unifyhub.mjs build",
+    "container:install": "node src/unifyhub.mjs install",
+    "container:restore": "node src/unifyhub.mjs restore",
+    "plugin:create": "node src/create-plugin.mjs",
+    "dev:build": "node src/unifyhub.mjs build --target dev",
+    "dev:install": "node src/unifyhub.mjs apply --target dev",
+    "dev:restore": "node src/unifyhub.mjs restore --target dev",
+    "dev:start": "node src/start-target.mjs --target dev",
+    "user:install": "unifyhub.bat apply",
+    "user:restore": "unifyhub.bat restore"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

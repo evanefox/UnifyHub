@@ -1,0 +1,47 @@
+function notifyUnifyHubEditorInstallComplete(metadata) {
+	try {
+		if (!metadata || metadata.type !== DOWNLOAD_ITEM_TYPES.EDITOR) return;
+		const key = metadata.uid || metadata.itemName || metadata.itemDisplayName;
+		if (!key) return;
+		const notified = globalThis.__unifyHubInstallToastNotified || new Set();
+		globalThis.__unifyHubInstallToastNotified = notified;
+		if (notified.has(key)) return;
+		notified.add(key);
+		const editorName = metadata.itemDisplayName || metadata.productName || metadata.itemName || "Unity Editor";
+		const title = "Editor application successfully installed";
+		const body = `${editorName} is ready. Open Unity Hub to continue.`;
+		const focusUnityHub = () => {
+			try {
+				mainContainer.get(IWindowActionsId).setMainWindowTitle?.();
+				mainContainer.get(IWindowActionsId).showMainWindow?.().catch?.(() => {});
+			} catch {}
+			try {
+				app.focus({ steal: true });
+			} catch {}
+			for (const window of BrowserWindow.getAllWindows()) {
+				if (!window || window.isDestroyed()) continue;
+				try {
+					if (window.isMinimized()) window.restore();
+					window.show();
+					window.moveTop?.();
+					window.focus();
+				} catch {}
+			}
+		};
+		const icon = app.isPackaged ? path.join(app.getAppPath(), "images/tray/trayIconWindows.ico") : path.resolve("images/tray/trayIconWindows.ico");
+		if (Notification.isSupported()) {
+			const notification = new Notification({ title, body, icon });
+			notification.on("click", focusUnityHub);
+			notification.show();
+		} else {
+			mainContainer.get(IUnityNotificationServiceAPIId).showOSNotification({
+				title,
+				body,
+				forceShow: true
+			}).catch(() => {});
+		}
+	} catch {}
+}
+
+var BROADCAST_DEBOUNCE_TIME = 500;
+var InstallationManager = class {

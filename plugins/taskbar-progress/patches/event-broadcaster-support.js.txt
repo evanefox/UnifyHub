@@ -1,0 +1,121 @@
+import { t as IOutputServiceId } from "./output-service-BK5FAE9Y.js";
+import { BrowserWindow } from "electron";
+
+function installUnifyHubTaskbarProgress() {
+	if (globalThis.__unifyHubTaskbarProgressInstalled) return;
+	globalThis.__unifyHubTaskbarProgressInstalled = true;
+	globalThis.__unifyHubTaskbarProgressState = { value: -1, mode: "none", updatedAt: 0 };
+}
+
+function toArray(value) {
+	return Array.isArray(value) ? value : [];
+}
+
+function clampProgress(value) {
+	const number = Number(value);
+	if (!Number.isFinite(number)) return null;
+	if (number > 1) return Math.max(0, Math.min(1, number / 100));
+	return Math.max(0, Math.min(1, number));
+}
+
+function progressFromItem(item) {
+	const progress = item?.progress;
+	const direct = clampProgress(
+		(typeof progress === "object" && progress !== null ? progress.progress : progress) ??
+		item?.percent ??
+		item?.percentage
+	);
+	if (direct !== null) return direct;
+	const transferred = Number(
+		item?.transferred ??
+		item?.downloaded ??
+		item?.downloadedBytes ??
+		(typeof progress === "object" && progress !== null ? progress.downloaded : undefined) ??
+		item?.metadata?.lastChecksumValue?.bytes
+	);
+	const total = Number(item?.total ?? item?.totalBytes ?? item?.size ?? item?.metadata?.sourceSizeinBytes);
+	if (Number.isFinite(transferred) && Number.isFinite(total) && total > 0) {
+		return Math.max(0, Math.min(1, transferred / total));
+	}
+	return null;
+}
+
+function summarizeDownloadProgress(data) {
+	if (!data || typeof data !== "object") return { value: -1, mode: "none" };
+	const activeItems = toArray(data.activeItems);
+	const queuedItems = toArray(data.queuedItems);
+	const inactiveItems = toArray(data.inActiveItems);
+	const failedItems = inactiveItems.filter((item) => /failed|error/i.test(String(item?.state || item?.status || "")));
+	if (failedItems.length > 0 && activeItems.length === 0 && queuedItems.length === 0) {
+		const failedProgress = progressFromItem(failedItems[0]);
+		return { value: failedProgress ?? 1, mode: "error" };
+	}
+	const pausedItems = inactiveItems.filter((item) => /paused/i.test(String(item?.state || item?.status || "")));
+	if (activeItems.length === 0 && queuedItems.length === 0 && pausedItems.length > 0) {
+		const pausedProgress = averageProgress(pausedItems);
+		return { value: pausedProgress ?? 1, mode: "paused" };
+	}
+	if (activeItems.length === 0 && queuedItems.length === 0) return { value: -1, mode: "none" };
+	const progressItems = activeItems.length > 0 ? activeItems : queuedItems;
+	const average = averageProgress(progressItems);
+	if (average === null) return { value: 2, mode: "indeterminate" };
+	const hasPaused = activeItems.some((item) => /paused/i.test(String(item?.state || item?.status || "")));
+	return { value: average, mode: hasPaused ? "paused" : "normal" };
+}
+
+function summarizeInstallationProgress(data) {
+	if (!data || typeof data !== "object") return null;
+	const activeInstallations = toArray(data.activeInstallations);
+	const installationBacklog = toArray(data.installationBacklog);
+	const inactiveInstallations = toArray(data.inactiveInstallations);
+	const failedInstallations = inactiveInstallations.filter((item) => /failed|error/i.test(String(item?.state || item?.status || "")));
+	if (failedInstallations.length > 0 && activeInstallations.length === 0 && installationBacklog.length === 0) return { value: 1, mode: "error" };
+	if (activeInstallations.length > 0 || installationBacklog.length > 0) return { value: 2, mode: "indeterminate" };
+	const finishedInstallations = inactiveInstallations.filter((item) => /finished|success/i.test(String(item?.state || item?.status || "")));
+	if (finishedInstallations.length > 0) return { value: -1, mode: "none" };
+	return null;
+}
+
+function averageProgress(items) {
+	const values = items.map(progressFromItem).filter((value) => value !== null);
+	if (!values.length) return null;
+	return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function summarizeHubUpdateProgress(eventName, content) {
+	if (eventName === "auto-update.download-failed") return { value: 1, mode: "error" };
+	if (eventName === "auto-update.download-complete") return { value: -1, mode: "none" };
+	if (eventName !== "auto-update.download-progress") return null;
+	const update = content?.[0] || {};
+	return { value: clampProgress(update.percent) ?? 2, mode: clampProgress(update.percent) === null ? "indeterminate" : "normal" };
+}
+
+function setTaskbarProgress(summary) {
+	const state = globalThis.__unifyHubTaskbarProgressState || {};
+	if (state.value === summary.value && state.mode === summary.mode && Date.now() - (state.updatedAt || 0) < 250) return;
+	globalThis.__unifyHubTaskbarProgressState = { ...summary, updatedAt: Date.now() };
+	for (const window of BrowserWindow.getAllWindows()) {
+		if (!window || window.isDestroyed()) continue;
+		try {
+			if (summary.mode === "none" || summary.value < 0) window.setProgressBar(-1);
+			else window.setProgressBar(summary.value, { mode: summary.mode });
+		} catch {}
+	}
+}
+
+function updateUnifyHubTaskbarProgress(eventName, ...content) {
+	if (process.platform !== "win32") return;
+	const hubUpdateSummary = summarizeHubUpdateProgress(eventName, content);
+	if (hubUpdateSummary) {
+		setTaskbarProgress(hubUpdateSummary);
+		return;
+	}
+	if (eventName === "installation-updates") {
+		const installSummary = summarizeInstallationProgress(content?.[0]);
+		if (installSummary) setTaskbarProgress(installSummary);
+		return;
+	}
+	if (eventName === "download-updates") {
+		setTaskbarProgress(summarizeDownloadProgress(content?.[0]));
+	}
+}

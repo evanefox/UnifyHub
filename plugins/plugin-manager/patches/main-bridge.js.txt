@@ -1,0 +1,259 @@
+		this._setContentSecurityPolicy();
+		(function installUnifyHubBridge() {
+			if (globalThis.__unifyHubBridgeInstalled) return;
+			globalThis.__unifyHubBridgeInstalled = true;
+			const __uhCorePlugins = new Set(["plugin-manager"]);
+			const __uhDefaultEnabledPlugins = new Set(["plugin-manager"]);
+			const __uhBundledProjectRoot = __UNIFYHUB_PROJECT_ROOT_JSON__;
+			const __uhBundledTarget = __UNIFYHUB_TARGET_ID_JSON__;
+			const __uhBundledTargetRoot = __UNIFYHUB_TARGET_ROOT_JSON__;
+			const __uhTarget = process.env.UNIFYHUB_TARGET || __uhBundledTarget || "dummy";
+			const __uhPluginIdPattern = /^[a-z0-9][a-z0-9._-]{0,63}$/i;
+			function __uhInstallSlug(value) {
+				return path.resolve(value || "")
+					.replace(/^[\\/]+/, "")
+					.replace(/[:\\/]+/g, "-")
+					.replace(/\s+/g, "-")
+					.replace(/-+/g, "-")
+					.replace(/^-+|-+$/g, "")
+					.toLowerCase();
+			}
+			function __uhProjectRoot() {
+				if (process.env.UNIFYHUB_HOME && fs.existsSync(path.join(process.env.UNIFYHUB_HOME, "src", "unifyhub.mjs"))) return process.env.UNIFYHUB_HOME;
+				if (__uhBundledProjectRoot && fs.existsSync(path.join(__uhBundledProjectRoot, "src", "unifyhub.mjs"))) return __uhBundledProjectRoot;
+				const fromResources = path.resolve(process.resourcesPath || app.getAppPath(), "..", "..", "..");
+				if (fs.existsSync(path.join(fromResources, "src", "unifyhub.mjs"))) return fromResources;
+				return path.dirname(app.getAppPath());
+			}
+			function __uhTargetRoot() {
+				if (process.env.UNIFYHUB_TARGET_ROOT) return process.env.UNIFYHUB_TARGET_ROOT;
+				if (__uhBundledTargetRoot) return __uhBundledTargetRoot;
+				return path.dirname(process.execPath);
+			}
+			const __uhRoot = __uhProjectRoot();
+			const __uhBundledPluginsDir = path.join(__uhRoot, "plugins");
+			const __uhTargetRootPath = __uhTargetRoot();
+			const __uhDataDir = path.join(app.getPath("appData"), "UnifyHub", "installs", __uhInstallSlug(__uhTargetRootPath));
+			const __uhPluginsDir = path.join(__uhDataDir, "plugins");
+			const __uhStatePath = path.join(__uhDataDir, "state.json");
+			const __uhLegacyStatePath = path.join(__uhRoot, "state", `${__uhTarget}.json`);
+			function __uhReadJson(filePath, fallback) {
+				try { return JSON.parse(fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/, "")); }
+				catch { return fallback; }
+			}
+			function __uhWriteJson(filePath, data) {
+				fs.mkdirSync(path.dirname(filePath), { recursive: true });
+				fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+			}
+			function __uhRendererUrl(event) {
+				return event?.senderFrame?.url || event?.sender?.getURL?.() || "";
+			}
+			function __uhFileUrlPath(value) {
+				try {
+					const parsed = new URL(String(value || ""));
+					if (parsed.protocol !== "file:") return "";
+					return decodeURIComponent(parsed.pathname).replace(/^\/([a-z]:)/i, "$1").replace(/\\/g, "/").toLowerCase();
+				} catch {
+					return "";
+				}
+			}
+			function __uhIsTrustedRendererUrl(value) {
+				const senderPath = __uhFileUrlPath(value);
+				const expectedPath = path.join(app.getAppPath(), "build", "renderer", "index.html").replace(/\\/g, "/").toLowerCase();
+				return Boolean(senderPath) && senderPath === expectedPath;
+			}
+			function __uhAssertTrustedRenderer(event) {
+				if (__uhIsTrustedRendererUrl(__uhRendererUrl(event))) return;
+				throw new Error("UnifyHub bridge is only available to Unity Hub's local renderer.");
+			}
+			function __uhHandle(channel, handler) {
+				ipcMain.handle(channel, (event, ...args) => {
+					__uhAssertTrustedRenderer(event);
+					return handler(event, ...args);
+				});
+			}
+			function __uhReadState() {
+				const state = __uhReadJson(__uhStatePath, __uhReadJson(__uhLegacyStatePath, { enabled: { "plugin-manager": true }, config: {}, disabledByUser: {} }));
+				state.enabled ||= {};
+				state.config ||= {};
+				state.disabledByUser ||= {};
+				state.enabled["plugin-manager"] = true;
+				return state;
+			}
+			function __uhPluginManifest(pluginId, source = "user") {
+				const pluginDir = path.join(source === "bundled" ? __uhBundledPluginsDir : __uhPluginsDir, pluginId);
+				const manifestPath = path.join(pluginDir, "plugin.json");
+				const manifest = __uhReadJson(manifestPath, null);
+				if (!manifest || !manifest.id) return null;
+				if (!__uhPluginIdPattern.test(manifest.id)) return null;
+				const bundled = source === "bundled";
+				return { ...manifest, pluginDir, manifestPath, bundled, source, core: Boolean(manifest.core || __uhCorePlugins.has(manifest.id)) };
+			}
+			function __uhListPlugins() {
+				fs.mkdirSync(__uhPluginsDir, { recursive: true });
+				const state = __uhReadState();
+				const byId = new Map();
+				for (const source of ["bundled", "user"]) {
+					const dir = source === "bundled" ? __uhBundledPluginsDir : __uhPluginsDir;
+					if (!fs.existsSync(dir)) continue;
+					for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+						if (!entry.isDirectory()) continue;
+						const plugin = __uhPluginManifest(entry.name, source);
+						if (!plugin || byId.has(plugin.id)) continue;
+						byId.set(plugin.id, plugin);
+					}
+				}
+				const plugins = [...byId.values()]
+					.map((plugin) => ({
+						id: plugin.id,
+						name: plugin.name || plugin.id,
+						version: plugin.version || "",
+						description: plugin.description || "",
+						config: Array.isArray(plugin.config) ? plugin.config.map((item) => ({ ...item, value: state.config?.[plugin.id]?.[item.key] ?? item.default ?? false })) : [],
+						core: plugin.core,
+						bundled: plugin.bundled,
+						source: plugin.source,
+						enabled: plugin.core ? true : state.disabledByUser?.[plugin.id] === true ? false : (__uhDefaultEnabledPlugins.has(plugin.id) || Boolean(state.enabled[plugin.id])),
+						path: plugin.pluginDir
+					}));
+				return { root: __uhDataDir, projectRoot: __uhRoot, target: __uhTarget, targetRoot: __uhTargetRootPath, plugins };
+			}
+			function __uhRunContainer(args) {
+				return new Promise((resolve) => {
+					const child = spawn("node", [path.join(__uhRoot, "src", "unifyhub.mjs"), ...args], { cwd: __uhRoot, env: { ...process.env, UNIFYHUB_HOME: __uhRoot, UNIFYHUB_TARGET: __uhTarget, UNIFYHUB_TARGET_ROOT: __uhTargetRootPath } });
+					let stdout = "";
+					let stderr = "";
+					child.stdout?.on("data", (chunk) => { stdout += chunk.toString(); });
+					child.stderr?.on("data", (chunk) => { stderr += chunk.toString(); });
+					child.on("error", (error) => resolve({ ok: false, error: error.message, stdout, stderr }));
+					child.on("close", (code) => resolve({ ok: code === 0, code, stdout, stderr }));
+				});
+			}
+			function __uhEnabledPluginIds() {
+				const current = __uhListPlugins();
+				const enabled = current.plugins.filter((plugin) => plugin.enabled).map((plugin) => plugin.id);
+				if (!enabled.includes("plugin-manager")) enabled.push("plugin-manager");
+				return enabled;
+			}
+			function __uhRestartWithApply() {
+				const enabled = __uhEnabledPluginIds();
+				const helper = `
+const { spawn, spawnSync } = require("node:child_process");
+const path = require("node:path");
+const [root, target, plugins, exePath, cwd, parentPid, restartArgsJson] = process.argv.slice(1);
+const restartArgs = JSON.parse(restartArgsJson || "[]");
+function sleep(ms) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); }
+for (let i = 0; i < 80; i += 1) {
+	try { process.kill(Number(parentPid), 0); sleep(125); }
+	catch { break; }
+}
+const result = spawnSync("node", [path.join(root, "src", "unifyhub.mjs"), "install", "--target", target, "--plugins", plugins], {
+	cwd: root,
+	env: { ...process.env, UNIFYHUB_HOME: root, UNIFYHUB_TARGET: target, UNIFYHUB_TARGET_ROOT: cwd },
+	encoding: "utf8"
+});
+if (result.status === 0) {
+	const child = spawn(exePath, restartArgs, { cwd, detached: true, stdio: "ignore", env: { ...process.env, UNIFYHUB_HOME: root, UNIFYHUB_TARGET: target, UNIFYHUB_TARGET_ROOT: cwd } });
+	child.unref();
+}
+`;
+				const restartArgs = process.env.UNIFYHUB_PRESERVE_REMOTE_ARGS === "1"
+					? process.argv.slice(1).filter((arg) => /^--remote-(debugging-port|allow-origins)=/.test(arg))
+					: [];
+				const child = spawn("node", ["-e", helper, __uhRoot, __uhTarget, enabled.join(","), process.execPath, path.dirname(process.execPath), String(process.pid), JSON.stringify(restartArgs)], {
+					cwd: __uhRoot,
+					detached: true,
+					stdio: "ignore",
+					env: { ...process.env, UNIFYHUB_HOME: __uhRoot, UNIFYHUB_TARGET: __uhTarget }
+				});
+				child.unref();
+				setTimeout(() => app.quit(), 80);
+				return { ok: true, restarting: true };
+			}
+			__uhHandle("unifyhub:list-plugins", () => __uhListPlugins());
+			__uhHandle("unifyhub:set-plugin-enabled", (_event, pluginId, enabled) => {
+				const manifest = __uhPluginManifest(pluginId, "bundled") || __uhPluginManifest(pluginId, "user");
+				if (!manifest) throw new Error(`Unknown plugin: ${pluginId}`);
+				if (manifest.core && !enabled) throw new Error(`${pluginId} is a core plugin and cannot be disabled from the UI.`);
+				const state = __uhReadState();
+				state.enabled[pluginId] = Boolean(enabled);
+				state.disabledByUser ||= {};
+				if (enabled) delete state.disabledByUser[pluginId];
+				else state.disabledByUser[pluginId] = true;
+				state.enabled["plugin-manager"] = true;
+				__uhWriteJson(__uhStatePath, state);
+				return __uhListPlugins();
+			});
+			__uhHandle("unifyhub:set-plugin-config", (_event, pluginId, values) => {
+				const manifest = __uhPluginManifest(pluginId, "bundled") || __uhPluginManifest(pluginId, "user");
+				if (!manifest) throw new Error(`Unknown plugin: ${pluginId}`);
+				const schema = Array.isArray(manifest.config) ? manifest.config : [];
+				const allowed = new Set(schema.map((item) => item.key));
+				const state = __uhReadState();
+				state.config ||= {};
+				state.config[pluginId] ||= {};
+				for (const item of schema) {
+					if (Object.prototype.hasOwnProperty.call(values || {}, item.key)) {
+						state.config[pluginId][item.key] = item.type === "checkbox" ? Boolean(values[item.key]) : values[item.key];
+					} else if (!Object.prototype.hasOwnProperty.call(state.config[pluginId], item.key)) {
+						state.config[pluginId][item.key] = item.default ?? false;
+					}
+				}
+				for (const key of Object.keys(state.config[pluginId])) {
+					if (!allowed.has(key)) delete state.config[pluginId][key];
+				}
+				__uhWriteJson(__uhStatePath, state);
+				return __uhListPlugins();
+			});
+			__uhHandle("unifyhub:delete-plugin", (_event, pluginId) => {
+				const manifest = __uhPluginManifest(pluginId, "bundled") || __uhPluginManifest(pluginId, "user");
+				if (!manifest) throw new Error(`Unknown plugin: ${pluginId}`);
+				if (manifest.core || manifest.bundled) throw new Error(`${pluginId} is bundled with UnifyHub and cannot be deleted from the UI.`);
+				fs.rmSync(manifest.pluginDir, { recursive: true, force: true });
+				const state = __uhReadState();
+				delete state.enabled[pluginId];
+				delete state.disabledByUser?.[pluginId];
+				__uhWriteJson(__uhStatePath, state);
+				return __uhListPlugins();
+			});
+			__uhHandle("unifyhub:install-plugin", async () => {
+				const owner = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows().find((window) => !window.isDestroyed?.()) || null;
+				const options = {
+					title: "Select the plugin you wish to install",
+					message: "Select the plugin you wish to install.",
+					buttonLabel: "Install plugin",
+					properties: ["openDirectory"],
+					defaultPath: __uhPluginsDir
+				};
+				const result = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
+				if (result.canceled || !result.filePaths?.[0]) return { canceled: true, ...__uhListPlugins() };
+				const sourceDir = result.filePaths[0];
+				const sourceManifest = __uhReadJson(path.join(sourceDir, "plugin.json"), null);
+				if (!sourceManifest?.id) throw new Error("Selected folder does not contain a plugin.json with an id.");
+				if (!__uhPluginIdPattern.test(sourceManifest.id)) throw new Error(`Invalid plugin id: ${sourceManifest.id}`);
+				const destination = path.join(__uhPluginsDir, sourceManifest.id);
+				if (__uhPluginManifest(sourceManifest.id, "bundled")) throw new Error(`Plugin id is reserved by a bundled UnifyHub plugin: ${sourceManifest.id}`);
+				if (fs.existsSync(destination)) throw new Error(`Plugin already exists: ${sourceManifest.id}`);
+				fs.cpSync(sourceDir, destination, { recursive: true });
+				const state = __uhReadState();
+				state.enabled[sourceManifest.id] = true;
+				state.disabledByUser ||= {};
+				delete state.disabledByUser[sourceManifest.id];
+				__uhWriteJson(__uhStatePath, state);
+				return { canceled: false, ...__uhListPlugins() };
+			});
+			__uhHandle("unifyhub:open-plugin-folder", (_event, pluginId) => {
+				const manifest = __uhPluginManifest(pluginId, "bundled") || __uhPluginManifest(pluginId, "user");
+				if (!manifest) throw new Error(`Unknown plugin: ${pluginId}`);
+				if (!fs.existsSync(manifest.pluginDir)) throw new Error(`Plugin folder does not exist: ${manifest.pluginDir}`);
+				const child = spawn("explorer.exe", [manifest.pluginDir], { detached: true, stdio: "ignore" });
+				child.unref();
+				return { ok: true, path: manifest.pluginDir };
+			});
+			__uhHandle("unifyhub:apply-plugins", async () => {
+				const enabled = __uhEnabledPluginIds();
+				return __uhRunContainer(["install", "--target", __uhTarget, "--plugins", enabled.join(",")]);
+			});
+			__uhHandle("unifyhub:restart-apply-plugins", () => __uhRestartWithApply());
+			__uhHandle("unifyhub:restore-target", () => __uhRunContainer(["restore", "--target", __uhTarget]));
+		})();

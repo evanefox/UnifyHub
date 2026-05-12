@@ -1,0 +1,3 @@
+		installUnifyHubTaskbarProgress();
+		updateUnifyHubTaskbarProgress(eventName, ...content);
+		if (this.#isRendererReady) this.#broadcastToWindows(eventName, ...content);

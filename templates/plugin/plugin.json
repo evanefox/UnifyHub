@@ -1,0 +1,26 @@
+{
+  "id": "__PLUGIN_ID__",
+  "name": "__PLUGIN_NAME__",
+  "version": "0.1.0",
+  "description": "Describe what this UnifyHub plugin changes.",
+  "core": false,
+  "config": [
+    {
+      "key": "enabledExample",
+      "type": "checkbox",
+      "label": "Example setting",
+      "description": "Replace this with a setting the plugin actually uses.",
+      "default": false
+    }
+  ],
+  "replacements": [
+    {
+      "filePattern": "build/main/app-*.js",
+      "find": "TEXT_TO_FIND_IN_TARGET_FILE",
+      "replaceFromFile": "patches/main.js.txt",
+      "alreadyPatchedFind": "UNIQUE_TEXT_AFTER_PATCH",
+      "once": true,
+      "required": false
+    }
+  ]
+}

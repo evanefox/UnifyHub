@@ -1,0 +1,31 @@
+﻿{
+    "id":  "plugin-manager",
+    "name":  "Plugin Manager UI",
+    "version":  "1.0.0",
+    "description":  "Core plugin management for UnifyHub.",
+    "core":  true,
+    "replacements":  [
+                         {
+                             "filePattern":  "build/main/app-*.js",
+                             "find":  "\t\tthis._setContentSecurityPolicy();",
+                             "replaceFromFile":  "patches/main-bridge.js.txt",
+                             "alreadyPatchedFind":  "__unifyHubBridgeInstalled",
+                             "once":  true
+                         },
+                         {
+                             "file":  "build/preload/mainWindowPreload.cjs",
+                             "find":  "contextBridge.exposeInMainWorld(\"api\", api);",
+                             "replaceFromFile":  "patches/preload-bridge.cjs.txt",
+                             "alreadyPatchedFind":  "contextBridge.exposeInMainWorld(\"unifyHub\", unifyHubApi);",
+                             "once":  true
+                         },
+                         {
+                             "file":  "build/renderer/index.html",
+                             "find":  "  \u003c/body\u003e",
+                             "replaceFromFile":  "patches/unifyhub-plugin-manager.html",
+                             "alreadyPatchedFind":  "unifyhub-plugin-manager-script",
+                             "once":  true
+                         }
+                     ]
+}
+

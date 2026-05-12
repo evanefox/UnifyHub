@@ -1,0 +1,63 @@
+function installUnifyHubTaskbarProgress() {
+	if (globalThis.__unifyHubTaskbarProgressInstalled) return;
+	globalThis.__unifyHubTaskbarProgressInstalled = true;
+	globalThis.__unifyHubTaskbarProgressState = { value: -1, mode: "none", updatedAt: 0 };
+}
+
+function clampUnifyHubTaskbarProgress(value) {
+	const number = Number(value);
+	if (!Number.isFinite(number)) return null;
+	if (number > 1) return Math.max(0, Math.min(1, number / 100));
+	return Math.max(0, Math.min(1, number));
+}
+
+function setUnifyHubTaskbarProgress(summary) {
+	if (process.platform !== "win32" || !summary) return;
+	const state = globalThis.__unifyHubTaskbarProgressState || {};
+	if (state.value === summary.value && state.mode === summary.mode && Date.now() - (state.updatedAt || 0) < 120) return;
+	globalThis.__unifyHubTaskbarProgressState = { ...summary, updatedAt: Date.now() };
+	for (const window of BrowserWindow.getAllWindows()) {
+		if (!window || window.isDestroyed()) continue;
+		try {
+			if (summary.mode === "none" || summary.value < 0) window.setProgressBar(-1);
+			else window.setProgressBar(summary.value, { mode: summary.mode });
+		} catch {}
+	}
+}
+
+function updateUnifyHubTaskbarProgressFromDownload(update) {
+	if (!update || typeof update !== "object") return;
+	const state = String(update.state || "");
+	const progress = update.progress;
+	const value = clampUnifyHubTaskbarProgress(
+		(typeof progress === "object" && progress !== null ? progress.progress : progress) ??
+		update.percent ??
+		update.percentage
+	);
+	if (/failed|error/i.test(state)) {
+		setUnifyHubTaskbarProgress({ value: value ?? 1, mode: "error" });
+		return;
+	}
+	if (/paused/i.test(state)) {
+		setUnifyHubTaskbarProgress({ value: value ?? 1, mode: "paused" });
+		return;
+	}
+	if (/finished|success/i.test(state)) {
+		const type = String(update?.metadata?.type || "");
+		if (/^(editor|editorModule)$/i.test(type)) {
+			setUnifyHubTaskbarProgress({ value: 2, mode: "indeterminate" });
+			return;
+		}
+		setUnifyHubTaskbarProgress({ value: -1, mode: "none" });
+		return;
+	}
+	if (/cleanup/i.test(state)) {
+		setUnifyHubTaskbarProgress({ value: -1, mode: "none" });
+		return;
+	}
+	if (/downloading/i.test(state) || value !== null) {
+		setUnifyHubTaskbarProgress({ value: value ?? 2, mode: value === null ? "indeterminate" : "normal" });
+	}
+}
+
+var STATE_CHANGE_HANDLER_SUPPRESSING_STATES = [

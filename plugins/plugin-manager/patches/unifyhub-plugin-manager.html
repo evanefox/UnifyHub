@@ -1,0 +1,1218 @@
+﻿    <!--
+      UnifyHub Plugin Manager injected page
+
+      Source location:
+        plugins/plugin-manager/patches/unifyhub-plugin-manager.html
+
+      Installed location after `node src\unifyhub.mjs install --target dummy`:
+        UnityHubDummyTarget/Unity Hub/resources/app.asar/build/renderer/index.html
+
+      This file owns the injected sidebar item, Plugins page markup/style, Manage menu, uninstall dialog, page positioning,
+      plugin toggles, and renderer-side calls to window.unifyHub.
+    -->
+    <script id="unifyhub-plugin-manager-script">
+      (() => {
+        const managerId = "unifyhub-plugin-manager";
+        const navId = "unifyhub-plugin-manager-nav";
+        const gearIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"></path></svg>';
+        const chevronDownIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>';
+        const slidersIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M40,88H73a32,32,0,0,0,62,0h81a8,8,0,0,0,0-16H135a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16Zm64-24A16,16,0,1,1,88,80,16,16,0,0,1,104,64ZM216,168H199a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16h97a32,32,0,0,0,62,0h17a8,8,0,0,0,0-16Zm-48,24a16,16,0,1,1,16-16A16,16,0,0,1,168,192Z"></path></svg>';
+        const folderIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M245,110.64A16,16,0,0,0,232,104H216V88a16,16,0,0,0-16-16H130.67L102.94,51.2a16.14,16.14,0,0,0-9.6-3.2H40A16,16,0,0,0,24,64V208h0a8,8,0,0,0,8,8H211.1a8,8,0,0,0,7.59-5.47l28.49-85.47A16.05,16.05,0,0,0,245,110.64ZM93.34,64,123.2,86.4A8,8,0,0,0,128,88h72v16H69.77a16,16,0,0,0-15.18,10.94L40,158.7V64Zm112,136H43.1l26.67-80H232Z"></path></svg>';
+        const reloadIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M224,128a96,96,0,0,1-166,65.93,8,8,0,0,1,11-11.62A80,80,0,1,0,128,48H88v32a8,8,0,0,1-13.66,5.66l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,88,24V32h40A96.11,96.11,0,0,1,224,128Z"></path></svg>';
+        const trashIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>';
+        const plugIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M224,136H200V104a32,32,0,0,0-32-32H136V48a8,8,0,0,0-16,0V72H88V48a8,8,0,0,0-16,0V72H48a8,8,0,0,0,0,16H72v32H48a8,8,0,0,0,0,16H72v32H48a8,8,0,0,0,0,16H72v24a8,8,0,0,0,16,0V184h32v24a8,8,0,0,0,16,0V184h32a32,32,0,0,0,32-32V120h24a8,8,0,0,0,0-16H200V88h24a8,8,0,0,0,0-16H200V48a8,8,0,0,0-16,0V72h-8.23A47.93,47.93,0,0,1,200,112v24h24a8,8,0,0,1,0,16ZM88,88h80a16,16,0,0,1,16,16v48a16,16,0,0,1-16,16H88Z"/></svg>';
+        const searchIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path></svg>';
+        const emptyIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="none" viewBox="0 0 56 56"><path d="M28 6 47 17v22L28 50 9 39V17L28 6Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M10.5 18.5 28 28.5 45.5 18.5M28 28.5V49" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        const clearIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,130.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>';
+        const warningIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="#e5484d" viewBox="0 0 256 256" class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColor#e5484d"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"></path></svg>';
+        let state = { root: "", target: "dummy", plugins: [] };
+        let statusText = "";
+        let searchText = "";
+        let openManageFor = "";
+        let closingManageFor = "";
+        let manageOpenedByCursor = false;
+        let manageCloseTimer = 0;
+        let manageMenuPosition = { top: 0, left: 0, origin: "18px 0px" };
+        let pendingUninstallId = "";
+        let closingUninstallId = "";
+        let configDialogPluginId = "";
+        let dialogCloseTimer = 0;
+        let applyDialogOpen = false;
+        let applyDialogError = "";
+        let applyDialogBusy = false;
+        const appliedConfigBaseline = new Map();
+        const navTooltipId = `${navId}-tooltip`;
+        let navTooltipCloseTimer = 0;
+        let navTooltipFrame = 0;
+        let navTooltipAnchor = null;
+
+        function bridge() {
+          return window.unifyHub || window.api?.unifyHub;
+        }
+
+        function installStartupOverflowGuard() {
+          if (document.getElementById(`${managerId}-overflow-guard`)) return;
+          const style = document.createElement("style");
+          style.id = `${managerId}-overflow-guard`;
+          style.textContent = `html,body{overflow:hidden!important}
+            #app > .MuiModal-root,#app > .MuiPopover-root,#app > .MuiDialog-root,#app .MuiModal-root:not(#manage-menu):not(.css-12m6313):not(.css-1egf66k){z-index:2400!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row{color:#202020!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row .css-birmn4{color:#838383!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row .css-1igvne2{color:#202020!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row:hover,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"]{background-color:#e8e8e8!important;color:#202020!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row:hover .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-birmn4{color:#202020!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row:hover .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row:hover .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-1igvne2{color:#202020!important}
+            #${navId} .css-1w8onnq{transition:margin 0.25s}
+            #${navId} .css-1w8onnq>*{transition:margin 0.25s, opacity 0.25s}
+            #${navId} .css-gbx5td{height:auto;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:1;margin-left:8px;transition:margin 0.25s, opacity 0.25s;will-change:margin-left,opacity}
+            #${navId} .css-ers32x,#${navId} .css-1igvne2{white-space:nowrap}
+            #${navId}.uh-nav-collapsed .css-gbx5td{height:20px;opacity:0;margin-left:0;pointer-events:none}
+            .uh-nav-tooltip{opacity:1;transform-origin:left center}
+            .uh-nav-tooltip .css-1k51tf5{position:relative;background-color:light-dark(#ffffff,#191919);color:light-dark(#1f1f1f,#f4f4f4);border:1px solid light-dark(#e8e8e8,#3a3a3a);border-radius:6px;box-shadow:0px 4px 8px -2px rgba(0,0,0,.18);font-family:Inter, Helvetica, Arial, sans-serif;font-size:.875rem;line-height:1.25rem;font-weight:400;padding:4px 10px;max-width:300px;animation:unifyhub-tooltip-open 135ms cubic-bezier(0.4,0,0.2,1) both;transform-origin:left center}
+            .uh-nav-tooltip.is-closing .css-1k51tf5{animation:unifyhub-tooltip-close 120ms cubic-bezier(0.4,0,0.2,1) both}
+            @keyframes unifyhub-tooltip-open{from{opacity:0;transform:translateY(-50%) scale(.86)}to{opacity:1;transform:translateY(-50%) scale(1)}}
+            @keyframes unifyhub-tooltip-close{from{opacity:1;transform:translateY(-50%) scale(1)}to{opacity:0;transform:translateY(-50%) scale(.86)}}`;
+          document.head.appendChild(style);
+        }
+
+        function sideNavList() {
+          return document.querySelector(".cloudui-side-nav-content .css-b95f0i") || document.querySelector(".cloudui-side-nav-content > div");
+        }
+
+        function sideRight() {
+          const selectors = [
+            ".MuiDrawer-paper",
+            ".cloudui-side-nav-body",
+            ".cloudui-side-nav-header",
+            ".cloudui-side-nav-content",
+            "[data-testid='sidenav-collapse']"
+          ];
+          const rects = selectors
+            .flatMap((selector) => [...document.querySelectorAll(selector)])
+            .map((element) => element.getBoundingClientRect())
+            .filter((rect) => rect.width > 0 && rect.height > 0 && rect.left >= 0 && rect.left < 280 && rect.right <= 320);
+          if (rects.length) return Math.round(Math.max(...rects.map((rect) => rect.right)));
+          return 224;
+        }
+
+        function nativeSideNavRect() {
+          const selectors = [".MuiDrawer-paper", ".cloudui-side-nav-body", ".cloudui-side-nav-content"];
+          return selectors
+            .map((selector) => document.querySelector(selector)?.getBoundingClientRect())
+            .find((value) => value?.width > 0 && value.left >= 0 && value.left < 160);
+        }
+
+        function nativeSideNavCollapsed() {
+          const rect = nativeSideNavRect();
+          return !rect || rect.width < 100 || sideRight() < 100;
+        }
+
+        function syncPluginNavCollapseState() {
+          const nav = document.getElementById(navId);
+          if (!nav) return;
+          const collapsed = nativeSideNavCollapsed();
+          nav.classList.toggle("uh-nav-collapsed", collapsed);
+          nav.classList.toggle("uh-nav-expanded", !collapsed);
+        }
+
+        function setPluginNavActive(active) {
+          const pluginRow = document.querySelector(`#${navId} .cloudui-side-nav-row`);
+          const rows = [...document.querySelectorAll(".cloudui-side-nav-row")]
+            .filter((row) => !row.closest(".MuiDialog-root, .MuiModal-root, .MuiPopover-root, [role='dialog']"));
+          if (active) {
+            rows.forEach((row) => {
+              if (row === pluginRow) return;
+              row.classList.remove("uh-nav-active");
+              row.removeAttribute("aria-current");
+              if (row.classList.contains("css-nvff64")) row.classList.replace("css-nvff64", "css-3poyno");
+              if (row.classList.contains("css-1bfpdx4")) row.classList.replace("css-1bfpdx4", "css-g720yb");
+            });
+            pluginRow?.classList.add("uh-nav-active");
+            setPluginNavNativeClass(pluginRow, true);
+            pluginRow?.setAttribute("aria-current", "page");
+          } else {
+            pluginRow?.classList.remove("uh-nav-active");
+            setPluginNavNativeClass(pluginRow, false);
+            pluginRow?.removeAttribute("aria-current");
+          }
+          applyPluginNavVisualState();
+          syncPluginNavCollapseState();
+        }
+
+        let navReselectFrame = 0;
+        function reselectPluginNavIfOpen() {
+          if (navReselectFrame) return;
+          navReselectFrame = requestAnimationFrame(() => {
+            navReselectFrame = 0;
+            if (document.getElementById(managerId)?.classList.contains("is-open")) setPluginNavActive(true);
+          });
+        }
+
+        function pluginNavIsLight() {
+          return document.getElementById(navId)?.classList.contains("uh-nav-light");
+        }
+
+        function setPluginNavNativeClass(row, active) {
+          if (!row) return;
+          row.classList.remove("css-3poyno", "css-nvff64", "css-g720yb", "css-1bfpdx4");
+          row.classList.add(active ? (pluginNavIsLight() ? "css-1bfpdx4" : "css-nvff64") : (pluginNavIsLight() ? "css-g720yb" : "css-3poyno"));
+        }
+
+        function applyPluginNavVisualState() {
+          const nav = document.getElementById(navId);
+          const row = nav?.querySelector(".cloudui-side-nav-row");
+          if (!nav || !row) return;
+          const light = pluginNavIsLight();
+          const active = row.classList.contains("uh-nav-active") || row.getAttribute("aria-current") === "page";
+          setPluginNavNativeClass(row, active);
+          row.style.backgroundColor = active && light ? "#e8e8e8" : "";
+          row.style.color = light ? "#202020" : "";
+          const icon = row.querySelector(".css-birmn4");
+          const label = row.querySelector(".css-ers32x, .css-1igvne2");
+          if (icon) icon.style.color = light ? (active ? "#202020" : "#838383") : "";
+          if (label) label.style.color = light ? "#202020" : "";
+          if (!light) row.style.removeProperty("background-color");
+          if (!light) row.style.removeProperty("color");
+          if (!light) icon?.style.removeProperty("color");
+          if (!light) label?.style.removeProperty("color");
+        }
+
+        function contentTop() {
+          const titlebarHeight = 40;
+          const topBanners = [...document.querySelectorAll(".MuiAlert-root, [role='alert']")]
+            .map((el) => el.getBoundingClientRect())
+            .filter((rect) => rect.width > 0 && rect.height > 0 && rect.top < 140);
+          const bannerBottom = topBanners.reduce((max, rect) => Math.max(max, rect.bottom), 0);
+          return Math.round(Math.max(titlebarHeight, bannerBottom));
+        }
+
+        function contentHost() {
+          const drawer = document.querySelector(".MuiDrawer-root.cloudui-side-nav-body") || document.querySelector(".cloudui-side-nav-body");
+          const sibling = drawer?.nextElementSibling;
+          if (sibling?.getBoundingClientRect().width > 0) return sibling;
+          const sideRightEdge = sideRight();
+          return [...document.querySelectorAll("#app > div, #app > div > div")]
+            .find((element) => {
+              if (element.id === managerId || element.closest(`#${managerId}`)) return false;
+              const rect = element.getBoundingClientRect();
+              return rect.width > 300 && rect.height > 300 && rect.left >= sideRightEdge - 4 && rect.top >= 35;
+            }) || document.getElementById("app") || document.body;
+        }
+
+        function mountPage(page) {
+          const host = contentHost();
+          if (page.parentElement === host) return host;
+          host.classList.add("uh-plugin-content-host");
+          host.insertBefore(page, host.firstChild);
+          return host;
+        }
+
+        function positionPage(page) {
+          mountPage(page);
+          if (page.parentElement?.classList.contains("uh-plugin-content-host")) {
+            page.style.left = "0";
+            page.style.top = "0";
+            page.style.width = "100%";
+            page.style.height = "100%";
+            return;
+          }
+          const left = sideRight();
+          const top = contentTop();
+          page.style.left = `${left}px`;
+          page.style.top = `${top}px`;
+          page.style.width = `${Math.max(0, window.innerWidth - left - 1)}px`;
+          page.style.height = `${Math.max(0, window.innerHeight - top)}px`;
+        }
+
+        function isLightColor(value) {
+          const match = String(value || "").match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+          if (!match) return false;
+          const [, r, g, b] = match.map(Number);
+          return ((r * 299) + (g * 587) + (b * 114)) / 1000 > 170;
+        }
+
+        function syncPluginTheme(page = document.getElementById(managerId)) {
+          const nav = document.getElementById(navId);
+          if (nav) {
+            const sidebar = document.querySelector(".MuiDrawer-paper") || document.querySelector(".cloudui-side-nav-body") || document.body;
+            const hasLightNavClasses = [...document.querySelectorAll(".cloudui-side-nav-row")]
+              .filter((row) => !row.closest(`#${navId}`))
+              .some((row) => row.classList.contains("css-g720yb") || row.classList.contains("css-1bfpdx4"));
+            nav.classList.toggle("uh-nav-light", hasLightNavClasses || isLightColor(getComputedStyle(sidebar).backgroundColor));
+            applyPluginNavVisualState();
+            syncPluginNavCollapseState();
+          }
+          if (!page) return;
+          page.classList.remove("uh-light", "uh-dark");
+        }
+
+        function openedPage() {
+          const page = document.getElementById(managerId);
+          return page?.classList.contains("is-open") ? page : null;
+        }
+
+        function syncOpenPagePosition() {
+          syncPluginNavCollapseState();
+          const page = openedPage();
+          if (page) {
+            positionPage(page);
+            syncPluginTheme(page);
+          }
+        }
+
+        let positionFrame = 0;
+        let positionUntil = 0;
+        function schedulePositionSync(duration = 500) {
+          positionUntil = Math.max(positionUntil, performance.now() + duration);
+          if (positionFrame) return;
+          const tick = () => {
+            positionFrame = 0;
+            syncOpenPagePosition();
+            if (performance.now() < positionUntil) positionFrame = requestAnimationFrame(tick);
+          };
+          positionFrame = requestAnimationFrame(tick);
+        }
+
+        function repairPluginNavActive(duration = 700) {
+          [0, 80, 220, 500, 900]
+            .filter((delay) => delay <= duration)
+            .forEach((delay) => window.setTimeout(() => {
+              if (!document.getElementById(managerId)?.classList.contains("is-open")) return;
+              syncPluginTheme();
+              setPluginNavActive(true);
+            }, delay));
+        }
+
+        let layoutResizeObserver = null;
+        const observedLayoutTargets = new WeakSet();
+        function observeLayoutTargets() {
+          if (!("ResizeObserver" in window)) return;
+          layoutResizeObserver ||= new ResizeObserver(() => schedulePositionSync(180));
+          [
+            document.querySelector(".cloudui-side-nav-content"),
+            document.querySelector("[data-testid='sidenav-collapse']"),
+            document.querySelector("#root"),
+            document.body
+          ].filter(Boolean).forEach((element) => {
+            if (!observedLayoutTargets.has(element)) {
+              observedLayoutTargets.add(element);
+              layoutResizeObserver.observe(element);
+            }
+          });
+        }
+
+        function labelOf(row) {
+          return row?.querySelector(".MuiTypography-subtitle2")?.textContent?.trim() || "";
+        }
+
+        function navRow() {
+          const span = document.createElement("span");
+          span.id = navId;
+          span.className = "";
+          span.innerHTML = `<a class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textDefault MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorDefault MuiButton-fullWidth MuiButton-root MuiButton-text MuiButton-textDefault MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorDefault MuiButton-fullWidth cloudui-side-nav-row css-3poyno" tabindex="0" role="button" aria-label="Plugins"><div class="MuiStack-root css-1w8onnq"><div class="MuiBox-root css-birmn4">${plugIcon}</div><div class="MuiBox-root css-gbx5td"><div class="MuiBox-root css-0"><div class="MuiTypography-root MuiTypography-subtitle2 css-ers32x">Plugins</div></div></div></div></a>`;
+          syncPluginNavCollapseState();
+          const link = span.querySelector("a");
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            hideNavTooltip();
+            showManager();
+          });
+          link.addEventListener("mouseenter", () => showNavTooltip(link));
+          link.addEventListener("focus", () => showNavTooltip(link));
+          link.addEventListener("mouseleave", hideNavTooltip);
+          link.addEventListener("blur", hideNavTooltip);
+          return span;
+        }
+
+        function sideNavCollapsed() {
+          const row = document.querySelector(`#${navId} .cloudui-side-nav-row`);
+          const labelBox = row?.querySelector(".css-gbx5td");
+          if (!row || !labelBox) return nativeSideNavCollapsed();
+          const rect = labelBox.getBoundingClientRect();
+          const style = getComputedStyle(labelBox);
+          return nativeSideNavCollapsed() || rect.width < 8 || style.display === "none" || style.visibility === "hidden" || style.opacity === "0";
+        }
+
+        function hideNavTooltip() {
+          window.clearTimeout(navTooltipCloseTimer);
+          navTooltipAnchor = null;
+          if (navTooltipFrame) {
+            cancelAnimationFrame(navTooltipFrame);
+            navTooltipFrame = 0;
+          }
+          const tooltip = document.getElementById(navTooltipId);
+          if (!tooltip) return;
+          tooltip.classList.add("is-closing");
+          navTooltipCloseTimer = window.setTimeout(() => tooltip.remove(), 120);
+        }
+
+        function positionNavTooltip(anchor) {
+          const tooltip = document.getElementById(navTooltipId);
+          if (!tooltip || !anchor?.isConnected || !sideNavCollapsed()) return false;
+          const rect = anchor.getBoundingClientRect();
+          const left = Math.round(rect.right + 15);
+          const top = Math.round(rect.top + (rect.height / 2));
+          tooltip.style.cssText = `position:absolute;inset:0 auto auto 0;margin:0;transform:translate3d(${left}px,${top}px,0);z-index:1500;pointer-events:none;`;
+          return true;
+        }
+
+        function trackNavTooltip() {
+          navTooltipFrame = 0;
+          if (!navTooltipAnchor || !positionNavTooltip(navTooltipAnchor)) return;
+          navTooltipFrame = requestAnimationFrame(trackNavTooltip);
+        }
+
+        function showNavTooltip(anchor) {
+          if (!sideNavCollapsed()) return;
+          window.clearTimeout(navTooltipCloseTimer);
+          let tooltip = document.getElementById(navTooltipId);
+          if (!tooltip) {
+            tooltip = document.createElement("div");
+            tooltip.id = navTooltipId;
+            tooltip.setAttribute("role", "tooltip");
+            tooltip.setAttribute("data-popper-placement", "right");
+            tooltip.className = "MuiPopper-root MuiTooltip-popper MuiTooltip-popperInteractive css-n4gn47 uh-nav-tooltip";
+            tooltip.innerHTML = `<div class="MuiTooltip-tooltip MuiTooltip-tooltipPlacementRight css-1k51tf5">Plugins</div>`;
+            document.body.appendChild(tooltip);
+          }
+          tooltip.classList.remove("is-closing");
+          navTooltipAnchor = anchor;
+          positionNavTooltip(anchor);
+          if (!navTooltipFrame) navTooltipFrame = requestAnimationFrame(trackNavTooltip);
+        }
+
+        function ensureNav() {
+          const list = sideNavList();
+          if (!list || document.getElementById(navId)) return;
+          const rows = [...list.querySelectorAll(":scope > span")];
+          const licenses = rows.find((row) => labelOf(row) === "Licenses");
+          if (licenses) licenses.insertAdjacentElement("afterend", navRow());
+          else list.appendChild(navRow());
+          syncPluginTheme();
+          if (document.getElementById(managerId)?.classList.contains("is-open")) setPluginNavActive(true);
+        }
+
+        function button(label, action, variant = "secondary") {
+          return `<button class="uh-btn uh-btn-${variant}" data-action="${action}">${label}</button>`;
+        }
+
+        function chip(label, variant = "outlined") {
+          if (variant === "error") {
+            return `<div class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorError MuiChip-filledError css-qyheyu">${warningIcon}<span class="MuiChip-label MuiChip-labelSmall css-a0cy5k">${label}</span></div>`;
+          }
+          const chipClass = variant === "filled"
+            ? "MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-8qn7l6"
+            : "MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-1dqmy24";
+          const labelClass = variant === "filled" ? "MuiChip-label MuiChip-labelSmall css-a0cy5k" : "MuiChip-label MuiChip-labelSmall css-yi2dbc";
+          return `<div class="${chipClass}"><span class="${labelClass}">${label}</span></div>`;
+        }
+
+        function configValues(plugin) {
+          return Object.fromEntries((plugin.config || []).map((option) => [option.key, Boolean(option.value)]));
+        }
+
+        function configSignature(plugin) {
+          return JSON.stringify(configValues(plugin));
+        }
+
+        function rememberAppliedConfigBaseline(force = false) {
+          (state.plugins || []).forEach((plugin) => {
+            if ((plugin.config || []).length && (force || !appliedConfigBaseline.has(plugin.id))) {
+              appliedConfigBaseline.set(plugin.id, configSignature(plugin));
+            }
+          });
+        }
+
+        function hasConfigChanges(plugin) {
+          if (!(plugin.config || []).length) return false;
+          const baseline = appliedConfigBaseline.get(plugin.id);
+          return baseline !== undefined && baseline !== configSignature(plugin);
+        }
+
+        function pluginToggle(plugin) {
+          const checked = plugin.enabled ? " checked" : "";
+          const disabled = plugin.core ? " disabled" : "";
+          return `<label class="uh-toggle" title="${plugin.core ? "Built-in plugin" : "Enable plugin"}"><input type="checkbox" data-action="toggle:${plugin.id}"${checked}${disabled}><span></span></label>`;
+        }
+
+        function pluginCard(plugin) {
+          const coreChip = plugin.core ? chip("Core", "filled") : "";
+          const bundledChip = plugin.bundled && !plugin.core ? chip("Bundled", "filled") : "";
+          const restartChip = hasConfigChanges(plugin) ? chip("Restart to apply", "error") : "";
+          const manageButtonId = `manage-button-${plugin.id}`;
+          const buttonExpanded = openManageFor === plugin.id && !manageOpenedByCursor;
+          const manage = `<div class="MuiStack-root css-5ax1kt"><button class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedDefault MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorDefault MuiButton-root MuiButton-outlined MuiButton-outlinedDefault MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorDefault css-uu51t0" tabindex="0" type="button" id="${manageButtonId}" data-action="manage:${plugin.id}" aria-haspopup="true" aria-controls="manage-menu" aria-expanded="${buttonExpanded}"><span class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-m7nory">${gearIcon}</span>Manage<span class="MuiButton-icon MuiButton-endIcon MuiButton-iconSizeMedium css-1vxln5e">${chevronDownIcon}</span></button></div>${manageMenu(plugin, manageButtonId)}`;
+          const description = escapeHtml(plugin.description || "No description");
+          const version = plugin.version ? ` <span class="uh-plugin-version">(${escapeHtml(plugin.version)})</span>` : "";
+          const path = escapeHtml(plugin.path || "");
+          return `<section class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation0 MuiCard-root css-16cxhfw uh-plugin-card" data-plugin-id="${escapeHtml(plugin.id)}" style="--Paper-shadow: none; --Paper-overlay: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0));">
+            <div class="MuiStack-root css-n07wia uh-plugin-card-row">
+              <div class="uh-plugin-toggle-slot">${pluginToggle(plugin)}</div>
+              <div class="uh-plugin-logo" aria-hidden="true">${plugIcon}</div>
+              <div class="MuiStack-root css-1sasepw">
+                <div class="MuiStack-root css-1algm2i">
+                  <div class="MuiStack-root css-u4p24i">
+                    <h4 class="MuiTypography-root MuiTypography-h4 MuiTypography-noWrap css-pn9hyf">${escapeHtml(plugin.name || plugin.id)}${version}</h4>
+                  </div>
+                  ${coreChip}
+                  ${bundledChip}
+                  ${restartChip}
+                </div>
+                <p class="MuiTypography-root MuiTypography-subtitle2 css-c5zcjf uh-plugin-description">${description}</p>
+                <div class="MuiStack-root css-kilrs uh-plugin-meta-row">
+                  ${path ? `<div class="uh-plugin-path" title="${path}">${path}</div>` : ""}
+                </div>
+              </div>
+              <div class="MuiStack-root css-5ax1kt uh-plugin-actions">
+                ${manage}
+              </div>
+            </div>
+          </section>`;
+        }
+
+        function emptyState(hasSearch) {
+          if (!hasSearch) return '<div class="uh-empty">No plugins found.</div>';
+          return `<div class="uh-empty-search"><div class="uh-empty-icon" aria-hidden="true">${emptyIcon}</div><h2>No plugins found</h2><p>Try adjusting your search term or clearing your current search to see all plugins.</p><button class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary css-19gz6c3" type="button" data-action="clear-search">Clear search</button></div>`;
+        }
+
+        function menuItem({ label, icon, action, danger = false, disabled = false, disabledReason = "", tabIndex = -1 }) {
+          const actionAttr = disabled ? "" : ` data-action="${action}"`;
+          const disabledAttr = disabled ? ' aria-disabled="true"' : "";
+          const titleAttr = disabledReason ? ` title="${escapeHtml(disabledReason)}"` : "";
+          return `<li class="MuiButtonBase-root MuiMenuItem-root MuiMenuItem-dense MuiMenuItem-root MuiMenuItem-dense css-1r634f4${disabled ? " Mui-disabled" : ""}" tabindex="${disabled ? -1 : tabIndex}" role="menuitem"${actionAttr}${disabledAttr}${titleAttr}><div class="MuiListItemIcon-root css-1afdhn0">${icon}</div><div class="MuiListItemText-root MuiListItemText-dense css-1slp3wh"><span class="MuiTypography-root MuiTypography-body2 MuiListItemText-primary css-txne6j">${label}</span></div></li>`;
+        }
+
+        function manageMenu(plugin, labelledBy) {
+          const isOpen = openManageFor === plugin.id;
+          const isClosing = closingManageFor === plugin.id;
+          if (!isOpen && !isClosing) return "";
+          const top = Math.round(manageMenuPosition.top || 0);
+          const left = Math.round(manageMenuPosition.left || 0);
+          const origin = manageMenuPosition.origin || "18px 0px";
+          const maxHeight = Math.round(manageMenuPosition.maxHeight || 0);
+          const maxHeightStyle = maxHeight ? ` max-height: ${maxHeight}px;` : "";
+          const uninstallDisabled = !!plugin.core || !!plugin.bundled;
+          const uninstallReason = plugin.core ? "Core plugins cannot be uninstalled from the UI." : plugin.bundled ? "Bundled plugins are managed by the UnifyHub install and cannot be uninstalled from the UI." : "";
+          return `<div role="presentation" id="manage-menu" class="MuiPopover-root MuiMenu-root MuiModal-root css-12m6313${isClosing ? " is-closing" : ""}"><div aria-hidden="true" class="MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-wj5uj5" data-action="close-manage" style="opacity: ${isClosing ? 0 : 1}; transition: opacity 120ms cubic-bezier(0.4, 0, 0.2, 1);"></div><div tabindex="0" data-testid="sentinelStart"></div><div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation8 MuiPopover-paper MuiMenu-paper css-cvm34e" tabindex="-1" style="--Paper-shadow: 0px 8px 16px rgb(0 0 0 / 10%), 0px 2px 4px rgb(0 0 0 / 0%); --Paper-overlay: linear-gradient(rgba(255, 255, 255, 0.119), rgba(255, 255, 255, 0.119)); opacity: ${isClosing ? 0 : 1}; transform: ${isClosing ? "scale(0.86)" : "scale(1)"}; transition: opacity 120ms cubic-bezier(0.4, 0, 0.2, 1), transform 120ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1); top: ${top}px; left: ${left}px; transform-origin: ${origin}; box-shadow: var(--Paper-shadow);${maxHeightStyle}"><ul class="MuiList-root MuiList-padding MuiList-dense MuiMenu-list css-ubifyk" role="menu" tabindex="-1" aria-labelledby="${labelledBy}">${menuItem({ label: "Config", icon: slidersIcon, action: `menu:config:${plugin.id}`, tabIndex: 0, disabled: !(plugin.config || []).length, disabledReason: "This plugin has no settings." })}${menuItem({ label: "Show in Explorer", icon: folderIcon, action: `menu:explorer:${plugin.id}` })}${menuItem({ label: "Reload", icon: reloadIcon, action: `menu:reload:${plugin.id}` })}<hr class="MuiDivider-root MuiDivider-fullWidth css-1a6ik6p">${menuItem({ label: "Uninstall", icon: trashIcon, action: `menu:uninstall:${plugin.id}`, disabled: uninstallDisabled, disabledReason: uninstallReason })}</ul></div><div tabindex="0" data-testid="sentinelEnd"></div></div>`;
+        }
+
+        function uninstallDialog() {
+          const dialogId = pendingUninstallId || closingUninstallId;
+          if (!dialogId) return "";
+          const isClosing = !pendingUninstallId && closingUninstallId;
+          const plugin = (state.plugins || []).find((item) => item.id === dialogId);
+          const pluginName = escapeHtml(plugin?.name || dialogId);
+          return `<div role="presentation" class="MuiDialog-root MuiModal-root css-1egf66k${isClosing ? " is-closing" : ""}"><div aria-hidden="true" class="MuiBackdrop-root MuiModal-backdrop css-1x7z3m2" data-action="dialog-cancel" style="opacity: ${isClosing ? 0 : 1}; transition: opacity 120ms cubic-bezier(0.4, 0, 0.2, 1);"></div><div tabindex="0" data-testid="sentinelStart"></div><div class="MuiDialog-container MuiDialog-scrollPaper css-fh1hs4" role="presentation" tabindex="-1" data-action="dialog-cancel" style="opacity: ${isClosing ? 0 : 1}; transition: opacity 120ms cubic-bezier(0.4, 0, 0.2, 1);"><div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation24 MuiDialog-paper MuiDialog-paperScrollPaper MuiDialog-paperWidthSm MuiDialog-paperFullWidth css-jws3r8" role="dialog" aria-labelledby="uh-dialog-title" aria-modal="true" style="--Paper-shadow: 0px 36px 32px rgba(0, 0, 0, 0.58); --Paper-overlay: linear-gradient(rgba(255, 255, 255, 0.165), rgba(255, 255, 255, 0.165));"><div class="MuiTypography-root MuiTypography-h6 MuiDialogTitle-root css-rrrssm" id="uh-dialog-title"><div class="MuiStack-root css-1ghls50"><div class="MuiStack-root css-18gwvlh"><h2 class="MuiTypography-root MuiTypography-h3 css-110xi6n">Uninstall Plugin</h2></div><button class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-1uvbf3" tabindex="0" type="button" data-action="dialog-cancel" aria-label="close">${closeIcon()}</button></div></div><div class="MuiDialogContent-root css-16m2lg5"><p class="MuiTypography-root MuiTypography-body1 MuiTypography-gutterBottom css-1il12si">Are you sure you want to uninstall ${pluginName}?</p><p class="MuiTypography-root MuiTypography-body1 css-wdm2sh">This action will remove the plugin folder from UnifyHub plugins.</p></div><div class="MuiDialogActions-root MuiDialogActions-spacing css-8dncs3"><button class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary css-19gz6c3" tabindex="0" type="button" data-action="dialog-cancel" style="height:32px;min-height:32px;padding:0 10px;line-height:20px;box-sizing:border-box;">Cancel</button><button class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedError MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorError MuiButton-root MuiButton-contained MuiButton-containedError MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorError css-e0rud8" tabindex="0" type="button" data-action="dialog-confirm" style="height:32px;min-height:32px;padding:0 10px;line-height:20px;box-sizing:border-box;">Uninstall</button></div></div></div><div tabindex="0" data-testid="sentinelEnd"></div></div>`;
+        }
+
+        function applyDialog() {
+          if (!applyDialogOpen) return "";
+          const error = applyDialogError ? `<pre class="uh-dialog-error">${escapeHtml(applyDialogError)}</pre>` : "";
+          const disabled = applyDialogBusy ? " disabled" : "";
+          return `<div role="presentation" class="MuiDialog-root MuiModal-root css-1egf66k"><div aria-hidden="true" class="MuiBackdrop-root MuiModal-backdrop css-1x7z3m2" data-action="apply-cancel" style="opacity:1;transition:opacity 120ms cubic-bezier(0.4,0,0.2,1);"></div><div tabindex="0" data-testid="sentinelStart"></div><div class="MuiDialog-container MuiDialog-scrollPaper css-fh1hs4" role="presentation" tabindex="-1" data-action="apply-cancel" style="opacity:1;transition:opacity 120ms cubic-bezier(0.4,0,0.2,1);"><div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation24 MuiDialog-paper MuiDialog-paperScrollPaper MuiDialog-paperWidthSm MuiDialog-paperFullWidth css-jws3r8" role="dialog" aria-labelledby="uh-apply-dialog-title" aria-modal="true" style="--Paper-shadow:0px 36px 32px rgba(0,0,0,0.58);--Paper-overlay:linear-gradient(rgba(255,255,255,0.165),rgba(255,255,255,0.165));"><div class="MuiTypography-root MuiTypography-h6 MuiDialogTitle-root css-rrrssm" id="uh-apply-dialog-title"><div class="MuiStack-root css-1ghls50"><div class="MuiStack-root css-18gwvlh"><h2 class="MuiTypography-root MuiTypography-h3 css-110xi6n">Restart Unity Hub?</h2></div><button class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-1uvbf3" tabindex="0" type="button" data-action="apply-cancel" aria-label="close"${disabled}>${closeIcon()}</button></div></div><div class="MuiDialogContent-root css-16m2lg5"><p class="MuiTypography-root MuiTypography-body1 MuiTypography-gutterBottom css-1il12si">Your plugin changes are ready to apply.</p><p class="MuiTypography-root MuiTypography-body1 css-wdm2sh">Unity Hub needs to restart so the changes can finish cleanly.</p>${error}</div><div class="MuiDialogActions-root MuiDialogActions-spacing css-8dncs3"><button class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary css-19gz6c3" tabindex="0" type="button" data-action="apply-cancel" style="height:32px;min-height:32px;padding:0 10px;line-height:20px;box-sizing:border-box;"${disabled}>Maybe later</button><button class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary css-l98j9z" tabindex="0" type="button" data-action="apply-confirm" style="height:32px;min-height:32px;padding:0 10px;line-height:20px;box-sizing:border-box;"${disabled}>${applyDialogBusy ? "Applying..." : "Restart"}</button></div></div></div><div tabindex="0" data-testid="sentinelEnd"></div></div>`;
+        }
+
+        function checkedIcon(checked) {
+          return checked
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256" stroke="currentColor" font-size="medium"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"></path></svg>'
+            : '<svg font-size="medium"></svg>';
+        }
+
+        function configDialog() {
+          if (!configDialogPluginId) return "";
+          const plugin = (state.plugins || []).find((item) => item.id === configDialogPluginId);
+          if (!plugin) return "";
+          const options = plugin.config || [];
+          const rows = options.length ? options.map((option) => {
+            const checked = !!option.value;
+            const label = escapeHtml(option.label || option.key);
+            const description = option.description ? `<p class="MuiTypography-root MuiTypography-body2 css-10fmpjk uh-config-description">${escapeHtml(option.description)}</p>` : "";
+            return `<div class="uh-config-row"><label class="MuiFormControlLabel-root MuiFormControlLabel-labelPlacementEnd css-105uu5g"><span class="MuiButtonBase-root MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium PrivateSwitchBase-root MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium ${checked ? "Mui-checked " : ""}MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium css-11p8s00"><input data-config-key="${escapeHtml(option.key)}" data-indeterminate="false" class="PrivateSwitchBase-input css-j8yymo" type="checkbox"${checked ? " checked" : ""}>${checkedIcon(checked)}</span><span class="MuiTypography-root MuiTypography-body1 MuiFormControlLabel-label css-13b6iyf">${label}</span></label>${description}</div>`;
+          }).join('<hr class="MuiDivider-root MuiDivider-fullWidth css-1a6ik6p uh-config-divider">') : '<p class="MuiTypography-root MuiTypography-body1 css-wdm2sh">This plugin has no configurable options.</p>';
+          return `<div role="presentation" class="MuiDialog-root MuiModal-root css-1egf66k"><div aria-hidden="true" class="MuiBackdrop-root MuiModal-backdrop css-1x7z3m2" data-action="config-cancel" style="opacity:1;transition:opacity 120ms cubic-bezier(0.4,0,0.2,1);"></div><div tabindex="0" data-testid="sentinelStart"></div><div class="MuiDialog-container MuiDialog-scrollPaper css-fh1hs4" role="presentation" tabindex="-1" data-action="config-cancel" style="opacity:1;transition:opacity 120ms cubic-bezier(0.4,0,0.2,1);"><div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation24 MuiDialog-paper MuiDialog-paperScrollPaper MuiDialog-paperWidthSm MuiDialog-paperFullWidth css-jws3r8" role="dialog" aria-labelledby="uh-config-dialog-title" aria-modal="true" style="--Paper-shadow:0px 36px 32px rgba(0,0,0,0.58);--Paper-overlay:linear-gradient(rgba(255,255,255,0.165),rgba(255,255,255,0.165));"><div class="MuiTypography-root MuiTypography-h6 MuiDialogTitle-root css-rrrssm" id="uh-config-dialog-title"><div class="MuiStack-root css-1ghls50"><div class="MuiStack-root css-18gwvlh"><h2 class="MuiTypography-root MuiTypography-h3 css-110xi6n">${escapeHtml(plugin.name || plugin.id)} Config</h2></div><button class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-1uvbf3" tabindex="0" type="button" data-action="config-cancel" aria-label="close">${closeIcon()}</button></div></div><div class="MuiDialogContent-root css-16m2lg5"><p class="MuiTypography-root MuiTypography-body1 MuiTypography-gutterBottom css-1il12si">Choose how this plugin behaves after the next Apply and restart.</p><div class="uh-config-list">${rows}</div></div><div class="MuiDialogActions-root MuiDialogActions-spacing css-8dncs3"><button class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary css-19gz6c3" tabindex="0" type="button" data-action="config-cancel" style="height:32px;min-height:32px;padding:0 10px;line-height:20px;box-sizing:border-box;">Cancel</button><button class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary css-l98j9z" tabindex="0" type="button" data-action="config-save" style="height:32px;min-height:32px;padding:0 10px;line-height:20px;box-sizing:border-box;">Save</button></div></div></div><div tabindex="0" data-testid="sentinelEnd"></div></div>`;
+        }
+
+        function closeIcon() {
+          return `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>`;
+        }
+        function escapeHtml(value) {
+          return String(value).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char]));
+        }
+
+        function ensurePortalRoot() {
+          let root = document.getElementById(`${managerId}-portal`);
+          if (root) return root;
+          root = document.createElement("div");
+          root.id = `${managerId}-portal`;
+          document.body.appendChild(root);
+          root.addEventListener("click", onPageClick);
+          root.addEventListener("change", onPageChange);
+          root.addEventListener("keydown", onPageKeyDown);
+          return root;
+        }
+
+        function ensurePage() {
+          let page = document.getElementById(managerId);
+          if (page) return page;
+          page = document.createElement("div");
+          page.id = managerId;
+          page.innerHTML = `<style>
+            html,body{overflow:hidden!important}
+            .uh-plugin-content-host{position:relative!important;overflow:hidden!important}
+            #${managerId}{position:absolute;inset:0;z-index:1;background:#131313;color:#e6e6e6;font-family:Inter,system-ui,sans-serif;display:none;overflow:hidden auto;border-left:0;border-top:0;box-sizing:border-box}
+            #${managerId}.is-open{display:block}
+            #${managerId} .uh-wrap{width:calc(100% - 64px);max-width:none;margin:0 auto;padding:36px 0 48px;box-sizing:border-box}
+            #${managerId} .uh-kicker{color:#a6a6a6;font-size:12px;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0}
+            #${managerId} h1{font-size:28px;line-height:1.2;margin:0 0 8px;font-weight:650;color:#f5f5f5;letter-spacing:0}
+            #${managerId} .uh-subtitle{margin:0;color:#bdbdbd;font-size:14px;line-height:1.5;max-width:760px}
+            #${managerId} .uh-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:28px 0 16px;flex-wrap:wrap}
+            #${managerId} .uh-toolbar-left,#${managerId} .uh-toolbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+            #${managerId} .uh-toolbar-right{justify-content:flex-end}
+            #${managerId} .uh-search-wrap{height:32px;width:200px;max-width:100%;min-width:160px;display:flex;align-items:center;gap:8px;border:1px solid #3a3a3a;border-radius:6px;background:#242424;color:#8d8d8d;box-sizing:border-box;padding:0 6px 0 10px}
+            #${managerId} .uh-search-wrap:hover{border-color:#7b7b7b}
+            #${managerId} .uh-search-wrap:focus-within{border-color:rgb(19,97,173);box-shadow:0 0 0 1px rgb(19,97,173)}
+            #${managerId} .uh-search-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:#777;flex:0 0 auto}
+            #${managerId} .uh-search-icon svg{width:16px;height:16px}
+            #${managerId} .uh-search{height:30px;min-width:0;flex:1;border:0;background:transparent;color:#d8d8d8;box-sizing:border-box;padding:0;font-family:Inter, Helvetica, Arial, sans-serif;font-size:.875rem;line-height:1.25rem;outline:0}
+            #${managerId} .uh-search::placeholder{color:#a7a7a7;opacity:1}
+            #${managerId} .uh-search::-webkit-search-cancel-button{display:none}
+            #${managerId} .uh-search-clear-adornment{display:none;align-items:center;justify-content:center;margin-left:0;color:#777}
+            #${managerId} .uh-search-clear{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;min-width:22px;border:0;border-radius:50%;padding:3px;margin:0 -3px 0 0;background-color:transparent!important;background-image:none!important;color:#777;cursor:pointer;transition:color 120ms cubic-bezier(0.4,0,0.2,1),background-color 120ms cubic-bezier(0.4,0,0.2,1)}
+            #${managerId} .uh-search-clear:hover{background-color:rgba(255,255,255,.08)!important;color:#a6a6a6}
+            #${managerId} .uh-search-clear:active{background-color:rgba(255,255,255,.12)!important;color:#bdbdbd}
+            #${managerId} .uh-search-clear:focus-visible{outline:2px solid rgb(19,97,173);outline-offset:1px}
+            #${managerId} .uh-search-clear svg{width:16px;height:16px;display:block}
+            #${managerId} .uh-search-wrap.has-value .uh-search-clear-adornment{display:flex}
+            #${managerId} .uh-btn{height:32px;border-radius:6px;border:1px solid #484848;background:#2b2b2b;color:#f2f2f2;font-size:13px;font-weight:600;padding:0 12px;cursor:pointer}
+            #${managerId} .uh-btn:hover{background:#353535;border-color:#5a5a5a}
+            #${managerId} .uh-btn:focus-visible,#${managerId} .css-19gz6c3:focus-visible,#${managerId} .css-uu51t0:focus-visible,#${managerId} .css-l98j9z:focus-visible,#${managerId} .css-e0rud8:focus-visible{outline:2px solid rgb(19,97,173);outline-offset:1px}
+            #${managerId} .uh-btn-primary{background:#0f6cbd;border-color:#0f6cbd;color:white}
+            #${managerId} .uh-btn-primary:hover{background:#115ea3;border-color:#115ea3}
+            #${managerId} .uh-btn-danger{background:#3b2020;border-color:#6f3333;color:#ffd6d6}
+            #${managerId} .uh-status{min-height:18px;color:#a6a6a6;font-size:12px;margin-bottom:12px;white-space:pre-wrap}
+            #${managerId} .uh-meta{display:grid;grid-template-columns:120px minmax(0,1fr);gap:6px 12px;margin:18px 0 8px;color:#a6a6a6;font-size:12px}
+            #${managerId} .uh-meta[hidden]{display:none!important}
+            #${managerId} .uh-meta b{color:#d8d8d8;font-weight:600}
+            #${managerId} .uh-list{display:grid;gap:8px}
+            #${managerId} .MuiStack-root{display:flex}
+            #${managerId} .MuiTypography-root{margin:0}
+            #${managerId} .css-16cxhfw{background:#191919;border:1px solid rgba(255,255,255,.08);border-radius:6px;color:#e6e6e6;box-shadow:none}
+            #${managerId} .css-n07wia{display:flex;flex-direction:row;align-items:flex-start;width:100%;padding:16px;box-sizing:border-box}
+            #${managerId} .css-n07wia>*+*{margin-left:8px}
+            #${managerId} .css-1sasepw{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 auto}
+            #${managerId} .css-1algm2i{display:flex;flex-flow:row wrap;align-items:center;gap:8px 4px;min-width:0}
+            #${managerId} .css-u4p24i{display:flex;align-items:center;min-width:0}
+            #${managerId} .css-kilrs{display:flex;flex-flow:row wrap;gap:4px;min-width:0}
+            #${managerId} .css-5ax1kt{display:flex;align-items:center;gap:8px}
+            #${managerId} .css-pn9hyf{font-size:1rem;line-height:1.5rem;font-weight:600;color:#f3f3f3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0}
+            #${managerId} .uh-plugin-version{font-weight:400;color:#bdbdbd}
+            #${managerId} .css-c5zcjf{font-size:.875rem;line-height:1.25rem;font-weight:400;color:#bdbdbd;letter-spacing:0}
+            #${managerId} .MuiChip-root{display:inline-flex;align-items:center;justify-content:center;height:24px;border-radius:12px;font-size:.75rem;line-height:1rem;font-weight:600;box-sizing:border-box}
+            #${managerId} .MuiChip-label{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+            #${managerId} .css-8qn7l6{background:#303030;color:#d8d8d8}
+            #${managerId} .css-qyheyu{background:rgba(229,72,77,.12);color:#ffb3b5;border:1px solid rgba(229,72,77,.45);gap:4px}
+            #${managerId} .css-qyheyu .MuiChip-icon{width:16px;height:16px;margin-left:6px;margin-right:-3px}
+            #${managerId} .css-p018ps,#${managerId} .css-1dqmy24{border:1px solid #4a4a4a;color:#cfcfcf;background:transparent}
+            #${managerId} .MuiButtonBase-root{font:inherit;letter-spacing:0}
+            #${managerId} .MuiButton-root{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:64px;border:0;border-radius:6px;box-sizing:border-box;cursor:pointer;text-transform:none;font-size:.875rem;line-height:1.5rem;font-weight:600;transition:background-color 250ms cubic-bezier(.4,0,.2,1),border-color 250ms cubic-bezier(.4,0,.2,1),box-shadow 250ms cubic-bezier(.4,0,.2,1)}
+            #${managerId} .css-uu51t0{padding:3px 8px;border:1px solid rgba(255,255,255,.26);border-radius:6px;background:#141414;color:#f4f4f4;box-shadow:none}
+            #${managerId} .css-uu51t0:hover,#${managerId} .css-uu51t0[aria-expanded="true"]{background:#242424;border-color:rgba(255,255,255,.42)}
+            #${managerId} .css-m7nory,#${managerId} .css-1vxln5e{display:inherit;margin:0;color:inherit}
+            #${managerId} .css-m7nory svg,#${managerId} .css-1vxln5e svg{width:1em;height:1em;display:block}
+            #${managerId} .css-19gz6c3{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;height:32px;min-height:32px;padding:0 10px;border:1px solid rgba(255,255,255,.26);border-radius:6px;background:transparent;color:#f2f2f2;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:600;font-size:.875rem;line-height:1.25rem}
+            #${managerId} .css-19gz6c3:hover{background:#2a2a2a;border-color:rgba(255,255,255,.42)}
+            #${managerId} .css-l98j9z{padding:4px 8px;border:1px solid #0f6cbd;border-radius:6px;background:#0f6cbd;color:#fff}
+            #${managerId} .css-l98j9z:hover{background:#115ea3;border-color:#115ea3}
+            #${managerId} .css-e0rud8{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;height:32px;min-height:32px;padding:0 10px;border:1px solid #c93c37;border-radius:6px;background:#c93c37;color:#fff;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:600;font-size:.875rem;line-height:1.25rem}
+            #${managerId} .css-e0rud8:hover{background:#b8322f;border-color:#b8322f}
+            .uh-nav-tooltip{opacity:1;transform-origin:left center}
+            .uh-nav-tooltip .css-1k51tf5{position:relative;background-color:light-dark(#ffffff,#191919);color:light-dark(#1f1f1f,#f4f4f4);border:1px solid light-dark(#e8e8e8,#3a3a3a);border-radius:6px;box-shadow:0px 4px 8px -2px rgba(0,0,0,.18);font-family:Inter, Helvetica, Arial, sans-serif;font-size:.875rem;line-height:1.25rem;font-weight:400;padding:4px 10px;max-width:300px;animation:unifyhub-tooltip-open 135ms cubic-bezier(0.4,0,0.2,1) both;transform-origin:left center}
+            .uh-nav-tooltip.is-closing .css-1k51tf5{animation:unifyhub-tooltip-close 120ms cubic-bezier(0.4,0,0.2,1) both}
+            @keyframes unifyhub-tooltip-open{from{opacity:0;transform:translateY(-50%) scale(.86)}to{opacity:1;transform:translateY(-50%) scale(1)}}
+            @keyframes unifyhub-tooltip-close{from{opacity:1;transform:translateY(-50%) scale(1)}to{opacity:0;transform:translateY(-50%) scale(.86)}}
+            #${managerId} .css-12m6313{position:fixed;z-index:1300;inset:0}
+            #${managerId} .css-12m6313 > .MuiPaper-root{padding-left:8px;padding-right:8px;border-radius:8px;box-shadow:var(--uh-menu-shadow);border:1px solid rgb(58,58,58);background-color:#191919}
+            #${managerId} .css-12m6313 .MuiBackdrop-root{background-color:transparent}
+            #${managerId} .css-12m6313 .MuiListSubheader-root{background-color:rgb(42,42,42)}
+            #${managerId} .css-12m6313 .MuiTextField-root{width:100%}
+            #${managerId} .css-wj5uj5{position:fixed;display:flex;align-items:center;justify-content:center;inset:0;-webkit-tap-highlight-color:transparent;background-color:rgba(0,0,0,.7);z-index:-1}
+            #${managerId} .css-cvm34e{background-color:#191919;color:rgb(238,238,238);transition:opacity 120ms cubic-bezier(0.4,0,0.2,1),transform 120ms cubic-bezier(0.4,0,0.2,1),box-shadow 300ms cubic-bezier(0.4,0,0.2,1);box-shadow:var(--Paper-shadow);background-image:none;border-radius:8px;position:absolute;overflow:hidden auto;min-width:16px;min-height:16px;max-width:calc(100% - 32px);outline:0;max-height:calc(100% - 96px);will-change:opacity,transform}
+            #${managerId} .css-12m6313.is-closing{pointer-events:none}
+            #${managerId} .css-12m6313:not(.is-closing) .css-cvm34e{animation:unifyhub-menu-open 135ms cubic-bezier(0.4,0,0.2,1) both}
+            #${managerId} .css-12m6313:not(.is-closing) .css-wj5uj5{animation:unifyhub-fade-in 120ms cubic-bezier(0.4,0,0.2,1) both}
+            #${managerId} .css-12m6313.is-closing .css-cvm34e{animation:none}
+            @keyframes unifyhub-menu-open{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
+            @keyframes unifyhub-fade-in{from{opacity:0}to{opacity:1}}
+            #${managerId} .css-ubifyk{list-style:none;margin:0;padding:8px 0;position:relative;outline:0}
+            #${managerId} .css-1r634f4{-webkit-tap-highlight-color:transparent;background-color:transparent;outline:0;border:0;margin:0;cursor:pointer;user-select:none;vertical-align:middle;appearance:none;color:inherit;display:flex;justify-content:flex-start;align-items:center;position:relative;text-decoration:none;box-sizing:border-box;white-space:nowrap;min-height:32px;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:400;font-size:.813rem;line-height:1.25rem;letter-spacing:0px;gap:8px;padding:6px 8px;border-radius:8px}
+            #${managerId} .css-1r634f4.Mui-disabled{pointer-events:none;cursor:default}
+            #${managerId} .css-1r634f4:hover{text-decoration:none;background-color:rgba(255,255,255,.07)}
+            #${managerId} .css-1r634f4.Mui-selected{background-color:rgba(10,110,200,.5)}
+            #${managerId} .css-1r634f4.Mui-selected.Mui-focusVisible{background-color:rgb(10,110,200)}
+            #${managerId} .css-1r634f4.Mui-selected:hover{background-color:rgb(10,110,200)}
+            #${managerId} .css-1r634f4.Mui-focusVisible{background-color:rgb(49,49,49)}
+            #${managerId} .css-1r634f4.Mui-disabled{opacity:.5}
+            #${managerId} .css-1r634f4 + .MuiDivider-root{margin-top:8px;margin-bottom:8px}
+            #${managerId} .css-1r634f4 + .MuiDivider-inset{margin-left:52px}
+            #${managerId} .css-1r634f4 .MuiListItemText-root{margin-top:0;margin-bottom:0}
+            #${managerId} .css-1r634f4 .MuiListItemText-inset{padding-left:36px}
+            #${managerId} .css-1r634f4 .MuiListItemIcon-root{min-width:36px}
+            #${managerId} .css-1r634f4 .MuiListItemIcon-root svg{font-size:1.25rem}
+            #${managerId} .css-1r634f4 .MuiListItemIcon-root{min-width:auto}
+            #${managerId} .css-1r634f4 .MuiCheckbox-root{padding:0}
+            #${managerId} .css-1r634f4.Mui-selected{background-color:rgba(255,255,255,.07)}
+            #${managerId} .css-1r634f4.Mui-selected:hover{background-color:rgba(255,255,255,.07)}
+            #${managerId} .css-1r634f4.Mui-selected.Mui-focusVisible{background-color:rgba(255,255,255,.07)}
+            #${managerId} .css-1r634f4.MuiMenuItem-root:hover{background-color:rgba(255,255,255,.07)}
+            #${managerId} .css-1r634f4 .MuiListItemText-inset{padding-left:calc(28px)}
+            html.uh-keyboard-mode #${managerId} .css-1r634f4:focus,#${managerId} .css-1r634f4:focus-visible,#${managerId} .css-1r634f4.Mui-focusVisible{background-color:rgba(255,255,255,.07);outline-offset:-2px;outline:rgb(19,97,173) solid 2px}
+            #${managerId} .css-1afdhn0{color:rgb(123,123,123);flex-shrink:0;display:inline-flex;min-width:auto;width:20px}
+            #${managerId} .css-1slp3wh{flex:1 1 auto;min-width:0;margin:0}
+            #${managerId} .MuiTypography-root:where(.css-1slp3wh .MuiListItemText-primary){display:block}
+            #${managerId} .MuiTypography-root:where(.css-1slp3wh .MuiListItemText-secondary){display:block}
+            #${managerId} .css-1slp3wh .MuiListItemText-primary{font-family:Inter, Helvetica, Arial, sans-serif;font-weight:400;font-size:.813rem;line-height:1.25rem;letter-spacing:0px}
+            #${managerId} .css-1slp3wh .MuiListItemText-secondary{font-family:Inter, Helvetica, Arial, sans-serif;font-weight:400;font-size:.75rem;line-height:1rem}
+            #${managerId} .css-txne6j{margin:0;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:400;font-size:.813rem;line-height:1.25rem;letter-spacing:0px}
+            #${managerId} .css-1egf66k{position:fixed;z-index:1300;inset:0;animation:unifyhub-dialog-in 140ms cubic-bezier(0.4,0,0.2,1)}
+            #${managerId} .css-1egf66k.is-closing{pointer-events:none;animation:none}
+            #${managerId} .css-1x7z3m2{position:fixed;display:flex;align-items:center;justify-content:center;inset:0;-webkit-tap-highlight-color:transparent;background-color:light-dark(rgba(0,0,0,.3),rgba(0,0,0,.7));z-index:-1}
+            #${managerId} .css-fh1hs4{height:100%;outline:0;display:flex;justify-content:center;align-items:center}
+            #${managerId} .css-jws3r8{color:rgb(238,238,238);transition:box-shadow 300ms cubic-bezier(0.4,0,0.2,1);background-image:none;margin:32px;position:relative;overflow-y:auto;display:flex;flex-direction:column;max-height:calc(100% - 64px);max-width:600px;width:calc(100% - 64px);background-color:#191919;border-radius:8px;box-shadow:rgba(0,0,0,.03) 0px 8px 8px -4px,rgba(0,0,0,.08) 0px 20px 24px -6px;border:1px solid rgb(58,58,58)}
+            @keyframes unifyhub-dialog-in{from{opacity:0}to{opacity:1}}
+            #${managerId} .css-rrrssm{margin:0;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:600;font-size:.75rem;line-height:.75rem;flex:0 0 auto;padding:16px 21px;border-bottom:thin solid rgb(58,58,58)}
+            #${managerId} .css-1ghls50{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0!important;margin:0!important}
+            #${managerId} .css-18gwvlh{display:flex;flex-direction:column;flex:1 1 auto;min-width:0%;overflow-wrap:break-word;padding:0!important;margin:0!important}
+            #${managerId} .css-110xi6n{margin:0;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:600;font-size:1rem;line-height:1.5rem;letter-spacing:-0.01rem}
+            #${managerId} .css-1uvbf3{display:inline-flex;align-items:center;justify-content:center;position:relative;box-sizing:border-box;-webkit-tap-highlight-color:transparent;background-color:transparent;outline:0;border:0;margin:0;cursor:pointer;user-select:none;vertical-align:middle;appearance:none;text-decoration:none;text-align:center;flex:0 0 auto;transition:background-color 150ms cubic-bezier(0.4,0,0.2,1);--IconButton-hoverBg: rgba(255,255,255,0.5);border-radius:6px;color:rgb(123,123,123);padding:0;font-size:20px;height:24px;width:24px}
+            #${managerId} .uh-search-clear.css-1uvbf3{height:26px;min-height:26px;width:auto;min-width:28px;padding:0 6px;border-radius:6px}
+            #${managerId} .css-1uvbf3.Mui-disabled{pointer-events:none;cursor:default}
+            #${managerId} .css-1uvbf3.Mui-disabled{background-color:transparent;color:rgb(58,58,58)}
+            #${managerId} .css-1uvbf3.MuiIconButton-loading{color:transparent}
+            #${managerId} .css-1uvbf3:focus-visible{outline-offset:1px;outline:rgb(19,97,173) solid 2px}
+            #${managerId} .css-1uvbf3:focus,#${managerId} .css-1uvbf3:hover,#${managerId} .css-1uvbf3[aria-expanded="true"]{border-color:rgb(123,123,123);background-color:rgba(255,255,255,0.07);color:rgb(238,238,238)}
+            #${managerId} .css-16m2lg5{flex:1 1 auto;overflow-y:auto;padding:20px 24px}
+            #${managerId} .css-8dncs3{display:flex;align-items:center;justify-content:flex-end;flex:0 0 auto;width:100%;padding:12px 24px;border-top:thin solid rgb(58,58,58)}
+            #${managerId} .css-8dncs3 > :not(style) ~ :not(style){margin-left:8px}
+            #${managerId} .css-8dncs3 .css-19gz6c3,#${managerId} .css-8dncs3 .css-e0rud8{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;height:32px!important;min-height:32px!important;padding:0 10px!important;font-family:Inter, Helvetica, Arial, sans-serif!important;font-weight:600!important;font-size:.875rem!important;line-height:1.25rem!important}
+            #${managerId} .css-1po99kh{margin-right:auto}
+            #${managerId} .css-105uu5g{display:inline-flex;align-items:center;cursor:pointer;vertical-align:middle;-webkit-tap-highlight-color:transparent;margin-left:-11px;margin-right:16px}
+            #${managerId} .css-105uu5g.Mui-disabled{cursor:default}
+            #${managerId} .css-105uu5g .MuiFormControlLabel-label.Mui-disabled{color:rgb(123,123,123)}
+            #${managerId} .css-11p8s00{display:inline-flex;align-items:center;justify-content:center;position:relative;box-sizing:border-box;-webkit-tap-highlight-color:transparent;background-color:transparent;outline:0;border:0;margin:0 0 0 4px;cursor:pointer;user-select:none;vertical-align:middle;appearance:none;text-decoration:none;padding:9px;border-radius:50%;color:rgb(180,180,180)}
+            #${managerId} .css-11p8s00.Mui-disabled{pointer-events:none;cursor:default}
+            #${managerId} .css-11p8s00.Mui-checked,#${managerId} .css-11p8s00.MuiCheckbox-indeterminate{color:rgb(10,110,200)}
+            #${managerId} .css-11p8s00.Mui-disabled{color:rgb(58,58,58)}
+            #${managerId} .css-11p8s00 input:focus-visible + svg{outline-offset:2px;outline:rgb(19,97,173) solid 2px}
+            #${managerId} .css-11p8s00.Mui-disabled svg{color:rgb(58,58,58);border-color:rgba(255,255,255,0.07);background-color:rgb(25,25,25)}
+            #${managerId} .css-11p8s00 svg{width:20px;height:20px;border-radius:4px;padding:2px;border:1px solid rgb(58,58,58);background-color:rgba(255,255,255,0.07);color:rgba(255,255,255,0.07);transition:fill 200ms cubic-bezier(0.4,0,0.2,1)}
+            #${managerId} .css-11p8s00 svg rect:first-of-type{display:none}
+            #${managerId} .css-11p8s00.Mui-focusVisible svg{color:rgb(123,123,123);border-color:rgb(123,123,123)}
+            #${managerId} .css-11p8s00.Mui-checked.Mui-focusVisible svg{border-color:rgb(19,97,173)}
+            #${managerId} .css-11p8s00:hover svg{background-color:rgba(255,255,255,0.07);border-color:rgb(123,123,123)}
+            #${managerId} .css-11p8s00.Mui-checked:not(.Mui-disabled) svg,#${managerId} .css-11p8s00.MuiCheckbox-indeterminate:not(.Mui-disabled) svg{color:rgb(255,255,255);border-color:rgb(19,97,173);background-color:rgb(10,110,200)}
+            #${managerId} .css-11p8s00.Mui-checked.Mui-disabled svg,#${managerId} .css-11p8s00.MuiCheckbox-indeterminate.Mui-disabled svg{color:rgba(10,110,200,0.5);border-color:rgba(10,110,200,0.5);background-color:rgb(0,60,124)}
+            #${managerId} .css-j8yymo{cursor:inherit;position:absolute;opacity:0;width:100%;height:100%;top:0px;left:0px;margin:0px;padding:0px;z-index:1}
+            #${managerId} .css-13b6iyf{margin:0;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:400;font-size:.875rem;line-height:1.25rem;letter-spacing:0px}
+            #${managerId} .uh-config-list{display:flex;flex-direction:column;margin-top:16px}
+            #${managerId} .uh-config-row{display:flex;flex-direction:column;gap:4px}
+            #${managerId} .uh-config-row .css-105uu5g{margin-left:-13px;margin-right:0}
+            #${managerId} .uh-config-description{margin:0 0 0 31px;color:#bdbdbd;font-family:Inter, Helvetica, Arial, sans-serif;font-size:.813rem;line-height:1.25rem}
+            #${managerId} .uh-config-divider{height:0;margin:14px 0;border:0;border-top:thin solid var(--uh-frame-border)}
+            #${managerId} .uh-plugin-card{background:#191919}
+            #${managerId} .uh-dialog-error{margin:16px 0 0;padding:10px 12px;border:1px solid #6f3333;border-radius:6px;background:#2a1515;color:#ffd6d6;font-family:Consolas, "Courier New", monospace;font-size:12px;line-height:1.35;white-space:pre-wrap;max-height:180px;overflow:auto}
+            #${managerId} .uh-plugin-card-row{width:100%;min-width:0}
+            #${managerId} .uh-plugin-toggle-slot{display:flex;align-items:flex-start;justify-content:center;flex:0 0 auto;padding-top:4px}
+            #${managerId} .uh-toggle{position:relative;display:block;width:36px;height:20px;cursor:pointer}
+            #${managerId} .uh-toggle input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:inherit}
+            #${managerId} .uh-toggle input:disabled{cursor:default}
+            #${managerId} .uh-toggle span{position:absolute;inset:0;border-radius:999px;background:#3b3b3b;border:1px solid #555;transition:background .12s,border-color .12s}
+            #${managerId} .uh-toggle span:before{content:"";position:absolute;width:14px;height:14px;left:2px;top:2px;border-radius:50%;background:#d9d9d9;transition:transform .12s}
+            #${managerId} .uh-toggle input:checked+span{background:#0f6cbd;border-color:#0f6cbd}
+            #${managerId} .uh-toggle input:checked+span:before{transform:translateX(14px);background:white}
+            #${managerId} .uh-toggle input:focus-visible+span{outline:2px solid rgb(19,97,173);outline-offset:2px}
+            #${managerId} .uh-toggle input:disabled+span{opacity:.55}
+            #${managerId} .uh-plugin-logo{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#bdbdbd;flex:0 0 32px}
+            #${managerId} .uh-plugin-logo svg{width:32px;height:32px}
+            #${managerId} .uh-plugin-description{white-space:normal;line-height:1.5}
+            #${managerId} .uh-plugin-meta-row{align-items:center}
+            #${managerId} .uh-plugin-path{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#7b7b7b;font-size:.75rem;line-height:1rem}
+            #${managerId} .uh-empty{border:1px dashed #3a3a3a;border-radius:6px;padding:26px;color:#aaa;text-align:center;background:#181818}
+            #${managerId} .uh-empty-search{min-height:220px;padding:28px 0 20px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#d8d8d8}
+            #${managerId} .uh-empty-icon{color:#7b7b7b;margin-bottom:12px}
+            #${managerId} .uh-empty-icon svg{display:block;width:48px;height:48px}
+            #${managerId} .uh-empty-search h2{margin:0 0 8px;font-family:Inter, Helvetica, Arial, sans-serif;font-size:1rem;line-height:1.5rem;font-weight:600;color:#f4f4f4;letter-spacing:0}
+            #${managerId} .uh-empty-search p{margin:0 0 14px;max-width:640px;font-family:Inter, Helvetica, Arial, sans-serif;font-size:.875rem;line-height:1.25rem;color:#d0d0d0}
+            #${managerId} .uh-plugin-actions{position:relative;display:flex;align-items:flex-start;align-self:center;flex:0 0 auto}
+            #${managerId} .uh-menu-item[aria-disabled="true"]{opacity:.45;cursor:not-allowed;pointer-events:none}
+            #${managerId} .uh-menu-danger .MuiListItemIcon-root,#${managerId} .uh-menu-danger .MuiTypography-root{color:#e38f8f}
+            @media (max-width: 980px){
+              #${managerId} .uh-wrap{width:calc(100% - 39px);margin:0 auto}
+              #${managerId} .uh-plugin-card-row{flex-wrap:wrap}
+            #${managerId} .uh-plugin-actions{width:100%;justify-content:flex-end}
+            }
+            #${managerId}{
+              color-scheme:light dark;
+              --uh-bg:light-dark(#ffffff,#131313);
+              --uh-surface:light-dark(#ffffff,#191919);
+              --uh-surface-raised:light-dark(#ffffff,#191919);
+              --uh-surface-muted:light-dark(#f4f4f4,#242424);
+              --uh-surface-hover:light-dark(rgba(0,0,0,.04),rgba(255,255,255,.07));
+              --uh-surface-active:light-dark(rgba(10,110,200,.12),rgba(10,110,200,.5));
+              --uh-border:light-dark(#cbcbcb,rgb(58,58,58));
+              --uh-frame-border:light-dark(#e8e8e8,rgb(58,58,58));
+              --uh-border-soft:light-dark(rgba(0,0,0,.12),rgba(255,255,255,.08));
+              --uh-border-hover:light-dark(#7b7b7b,rgba(255,255,255,.42));
+              --uh-text:light-dark(#1f1f1f,rgb(238,238,238));
+              --uh-title:light-dark(#111111,#f5f5f5);
+              --uh-text-secondary:light-dark(#4f4f4f,#bdbdbd);
+              --uh-text-muted:light-dark(#6e6e6e,#a6a6a6);
+              --uh-text-disabled:light-dark(#8a8a8a,rgb(123,123,123));
+              --uh-primary:#0b68bd;
+              --uh-primary-bg:#0f6cbd;
+              --uh-focus:rgb(19,97,173);
+              --uh-menu-shadow:0px 8px 16px rgb(0 0 0 / 10%),0px 2px 4px rgb(0 0 0 / 0%);
+              --uh-dialog-shadow:none;
+            }
+            #${managerId}{background:var(--uh-bg);color:var(--uh-text);border-left:0;border-top:0}
+            #${managerId} h1{color:var(--uh-title)}
+            #${managerId} .uh-kicker,#${managerId} .uh-status,#${managerId} .uh-meta,#${managerId} .uh-plugin-path,#${managerId} .uh-empty-icon{color:var(--uh-text-muted)}
+            #${managerId} .uh-subtitle,#${managerId} .css-c5zcjf,#${managerId} .uh-plugin-version,#${managerId} .uh-config-description,#${managerId} .uh-empty-search p{color:var(--uh-text-secondary)}
+            #${managerId} .uh-meta b,#${managerId} .css-pn9hyf,#${managerId} .uh-empty-search h2{color:var(--uh-title)}
+            #${managerId} .uh-search-wrap{background:var(--uh-surface-muted);border-color:var(--uh-border);color:var(--uh-text-muted)}
+            #${managerId} .uh-search-wrap:hover{border-color:var(--uh-border-hover)}
+            #${managerId} .uh-search-wrap:focus-within{border-color:rgb(19,97,173);box-shadow:0 0 0 1px rgb(19,97,173)}
+            #${managerId} .uh-search{color:var(--uh-text)}
+            #${managerId} .uh-search::placeholder{color:var(--uh-text-muted)}
+            #${managerId} .uh-search-icon,#${managerId} .uh-search-clear-adornment,#${managerId} .uh-search-clear{color:var(--uh-text-muted)}
+            #${managerId} .uh-search-clear:hover{background-color:var(--uh-surface-hover)!important;color:var(--uh-text)}
+            #${managerId} .uh-btn,#${managerId} .css-19gz6c3,#${managerId} .css-uu51t0{border-color:var(--uh-border);background:transparent;color:var(--uh-text)}
+            #${managerId} .uh-btn:hover,#${managerId} .css-19gz6c3:hover,#${managerId} .css-uu51t0:hover,#${managerId} .css-uu51t0[aria-expanded="true"]{background:var(--uh-surface-hover);border-color:var(--uh-border-hover)}
+            #${managerId} .css-l98j9z,#${managerId} .uh-btn-primary{background:var(--uh-primary-bg);border-color:var(--uh-primary-bg);color:#fff}
+            #${managerId} .css-l98j9z:hover,#${managerId} .uh-btn-primary:hover{background:#115ea3;border-color:#115ea3;color:#fff}
+            #${managerId} .css-l98j9z:active,#${managerId} .uh-btn-primary:active{background:#0f548c;border-color:#0f548c;color:#fff}
+            #${managerId} .css-l98j9z:focus,#${managerId} .uh-btn-primary:focus{background:var(--uh-primary-bg);border-color:var(--uh-primary-bg);color:#fff}
+            #${managerId} .css-16cxhfw,#${managerId} .uh-plugin-card{background:var(--uh-surface);border-color:var(--uh-border-soft);color:var(--uh-text)}
+            #${managerId} .css-8qn7l6{background:var(--uh-surface-muted);color:var(--uh-text-secondary)}
+            #${managerId} .css-p018ps,#${managerId} .css-1dqmy24{border-color:var(--uh-border);color:var(--uh-text-secondary);background:transparent}
+            #${managerId} .css-cvm34e,#${managerId} .css-12m6313 > .MuiPaper-root{background-color:var(--uh-surface-raised);color:var(--uh-text);border-color:var(--uh-frame-border);box-shadow:var(--uh-menu-shadow)}
+            #${managerId} .css-1r634f4:hover,html.uh-keyboard-mode #${managerId} .css-1r634f4:focus,#${managerId} .css-1r634f4:focus-visible,#${managerId} .css-1r634f4.Mui-focusVisible,#${managerId} .css-1r634f4.Mui-selected,#${managerId} .css-1r634f4.Mui-selected:hover,#${managerId} .css-1r634f4.Mui-selected.Mui-focusVisible,#${managerId} .css-1r634f4.MuiMenuItem-root:hover{background-color:var(--uh-surface-hover)}
+            #${managerId} .css-txne6j{color:inherit}
+            #${managerId} .css-cvm34e .css-1afdhn0,#${managerId} .css-cvm34e .css-1afdhn0 svg{color:#838383}
+            #${managerId} .css-rrrssm,#${managerId} .css-8dncs3{border-color:var(--uh-frame-border)}
+            #${managerId} .css-cvm34e .css-1a6ik6p{height:0;margin:8px 0;border:0;border-top:thin solid var(--uh-frame-border)}
+            #${managerId} .css-jws3r8{background-color:var(--uh-surface-raised);color:var(--uh-text);border-color:var(--uh-frame-border);box-shadow:var(--uh-dialog-shadow)}
+            #${managerId} .css-1uvbf3{color:var(--uh-text-muted)}
+            #${managerId} .css-1uvbf3:focus,#${managerId} .css-1uvbf3:hover,#${managerId} .css-1uvbf3[aria-expanded="true"]{background-color:var(--uh-surface-hover);color:var(--uh-text)}
+            #${managerId} .css-16m2lg5,#${managerId} .css-1il12si,#${managerId} .css-wdm2sh,#${managerId} .css-13b6iyf{color:var(--uh-text)}
+            #${managerId} .css-11p8s00 svg{border-color:var(--uh-border);background-color:var(--uh-surface-hover);color:transparent}
+            #${managerId} .uh-toggle span{background:var(--uh-surface-muted);border-color:var(--uh-border)}
+            #${managerId} .uh-toggle span:before{background:var(--uh-text-secondary)}
+            #${managerId} .uh-plugin-logo{color:var(--uh-text-secondary)}
+            #${managerId} .uh-empty{border-color:var(--uh-border);background:var(--uh-surface);color:var(--uh-text-muted)}
+            #${managerId}-portal{position:fixed;inset:0;z-index:2600;pointer-events:none;color-scheme:light dark;--uh-surface-raised:light-dark(#ffffff,#191919);--uh-surface-hover:light-dark(rgba(0,0,0,.04),rgba(255,255,255,.07));--uh-border:light-dark(#cbcbcb,rgb(58,58,58));--uh-frame-border:light-dark(#e8e8e8,rgb(58,58,58));--uh-text:light-dark(#1f1f1f,rgb(238,238,238));--uh-text-muted:light-dark(#6e6e6e,#a6a6a6);--uh-focus:rgb(19,97,173);--uh-primary-bg:#0f6cbd;--uh-dialog-shadow:none}
+            #${managerId}-portal:empty{display:none}
+            #${managerId}-portal .MuiModal-root{pointer-events:auto}
+            #${managerId}-portal .MuiStack-root{display:flex}
+            #${managerId}-portal .MuiTypography-root{margin:0}
+            #${managerId}-portal .MuiButtonBase-root{font:inherit;letter-spacing:0}
+            #${managerId}-portal .MuiButton-root{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:64px;border:0;border-radius:6px;box-sizing:border-box;cursor:pointer;text-transform:none;font-family:Inter, Helvetica, Arial, sans-serif;font-size:.875rem;line-height:1.5rem;font-weight:600;transition:background-color 250ms cubic-bezier(.4,0,.2,1),border-color 250ms cubic-bezier(.4,0,.2,1),box-shadow 250ms cubic-bezier(.4,0,.2,1)}
+            #${managerId}-portal .css-19gz6c3{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;height:32px;min-height:32px;padding:0 10px;border:1px solid var(--uh-border);border-radius:6px;background:transparent;color:var(--uh-text);font-family:Inter, Helvetica, Arial, sans-serif;font-weight:600;font-size:.875rem;line-height:1.25rem}
+            #${managerId}-portal .css-19gz6c3:hover{background:var(--uh-surface-hover);border-color:light-dark(#7b7b7b,rgba(255,255,255,.42))}
+            #${managerId}-portal .css-l98j9z{padding:4px 8px;border:1px solid var(--uh-primary-bg);border-radius:6px;background:var(--uh-primary-bg);color:#fff}
+            #${managerId}-portal .css-l98j9z:hover{background:#115ea3;border-color:#115ea3}
+            #${managerId}-portal .css-l98j9z:active{background:#0f548c;border-color:#0f548c;color:#fff}
+            #${managerId}-portal .css-e0rud8{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;height:32px;min-height:32px;padding:0 10px;border:1px solid #c93c37;border-radius:6px;background:#c93c37;color:#fff;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:600;font-size:.875rem;line-height:1.25rem}
+            #${managerId}-portal .css-e0rud8:hover{background:#b8322f;border-color:#b8322f}
+            #${managerId}-portal .css-19gz6c3:focus-visible,#${managerId}-portal .css-l98j9z:focus-visible,#${managerId}-portal .css-e0rud8:focus-visible{outline:2px solid var(--uh-focus);outline-offset:1px}
+            #${managerId}-portal .css-1egf66k{position:fixed;z-index:2600;inset:0;animation:unifyhub-dialog-in 140ms cubic-bezier(0.4,0,0.2,1)}
+            #${managerId}-portal .css-1egf66k.is-closing{pointer-events:none;animation:none}
+            #${managerId}-portal .css-1x7z3m2{position:fixed;display:flex;align-items:center;justify-content:center;inset:0;-webkit-tap-highlight-color:transparent;background-color:light-dark(rgba(0,0,0,.3),rgba(0,0,0,.7));z-index:-1}
+            #${managerId}-portal .css-fh1hs4{height:100%;outline:0;display:flex;justify-content:center;align-items:center}
+            #${managerId}-portal .css-jws3r8{color:var(--uh-text);transition:box-shadow 300ms cubic-bezier(0.4,0,0.2,1);background-image:none;margin:32px;position:relative;overflow-y:auto;display:flex;flex-direction:column;max-height:calc(100% - 64px);max-width:600px;width:calc(100% - 64px);background-color:var(--uh-surface-raised);border-radius:8px;box-shadow:var(--uh-dialog-shadow);border:1px solid var(--uh-frame-border)}
+            #${managerId}-portal .css-rrrssm{margin:0;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:600;font-size:.75rem;line-height:.75rem;flex:0 0 auto;padding:16px 21px;border-bottom:thin solid var(--uh-frame-border)}
+            #${managerId}-portal .css-1ghls50{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0!important;margin:0!important}
+            #${managerId}-portal .css-18gwvlh{display:flex;flex-direction:column;flex:1 1 auto;min-width:0%;overflow-wrap:break-word;padding:0!important;margin:0!important}
+            #${managerId}-portal .css-110xi6n{margin:0;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:600;font-size:1rem;line-height:1.5rem;letter-spacing:-0.01rem}
+            #${managerId}-portal .css-1uvbf3{display:inline-flex;align-items:center;justify-content:center;position:relative;box-sizing:border-box;-webkit-tap-highlight-color:transparent;background-color:transparent;outline:0;border:0;margin:0;cursor:pointer;user-select:none;vertical-align:middle;appearance:none;text-decoration:none;text-align:center;flex:0 0 auto;transition:background-color 150ms cubic-bezier(0.4,0,0.2,1);border-radius:6px;color:var(--uh-text-muted);padding:0;font-size:20px;height:24px;width:24px}
+            #${managerId}-portal .css-1uvbf3.Mui-disabled{pointer-events:none;cursor:default;background-color:transparent;color:rgb(58,58,58)}
+            #${managerId}-portal .css-1uvbf3:focus-visible{outline-offset:1px;outline:var(--uh-focus) solid 2px}
+            #${managerId}-portal .css-1uvbf3:focus,#${managerId}-portal .css-1uvbf3:hover,#${managerId}-portal .css-1uvbf3[aria-expanded="true"]{background-color:var(--uh-surface-hover);color:var(--uh-text)}
+            #${managerId}-portal .css-16m2lg5{flex:1 1 auto;overflow-y:auto;padding:20px 24px;color:var(--uh-text)}
+            #${managerId}-portal .css-1il12si,#${managerId}-portal .css-wdm2sh,#${managerId}-portal .css-13b6iyf{color:var(--uh-text)}
+            #${managerId}-portal .css-8dncs3{display:flex;align-items:center;justify-content:flex-end;flex:0 0 auto;width:100%;padding:12px 24px;border-top:thin solid var(--uh-frame-border)}
+            #${managerId}-portal .css-8dncs3 > :not(style) ~ :not(style){margin-left:8px}
+            #${managerId}-portal .css-8dncs3 .css-19gz6c3,#${managerId}-portal .css-8dncs3 .css-e0rud8,#${managerId}-portal .css-8dncs3 .css-l98j9z{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;height:32px!important;min-height:32px!important;padding:0 10px!important;font-family:Inter, Helvetica, Arial, sans-serif!important;font-weight:600!important;font-size:.875rem!important;line-height:1.25rem!important}
+            #${managerId}-portal .css-105uu5g{display:inline-flex;align-items:center;cursor:pointer;vertical-align:middle;-webkit-tap-highlight-color:transparent;margin-left:-11px;margin-right:16px}
+            #${managerId}-portal .css-11p8s00{display:inline-flex;align-items:center;justify-content:center;position:relative;box-sizing:border-box;-webkit-tap-highlight-color:transparent;background-color:transparent;outline:0;border:0;margin:0 0 0 4px;cursor:pointer;user-select:none;vertical-align:middle;appearance:none;text-decoration:none;padding:9px;border-radius:50%;color:rgb(180,180,180)}
+            #${managerId}-portal .css-11p8s00 input:focus-visible + svg{outline-offset:2px;outline:var(--uh-focus) solid 2px}
+            #${managerId}-portal .css-11p8s00 svg{width:20px;height:20px;border-radius:4px;padding:2px;border:1px solid var(--uh-border);background-color:var(--uh-surface-hover);color:transparent;transition:fill 200ms cubic-bezier(0.4,0,0.2,1)}
+            #${managerId}-portal .css-11p8s00.Mui-checked:not(.Mui-disabled) svg,#${managerId}-portal .css-11p8s00.MuiCheckbox-indeterminate:not(.Mui-disabled) svg{color:rgb(255,255,255);border-color:var(--uh-focus);background-color:rgb(10,110,200)}
+            #${managerId}-portal .css-j8yymo{cursor:inherit;position:absolute;opacity:0;width:100%;height:100%;top:0px;left:0px;margin:0px;padding:0px;z-index:1}
+            #${managerId}-portal .uh-config-list{display:flex;flex-direction:column;margin-top:16px}
+            #${managerId}-portal .uh-config-row{display:flex;flex-direction:column;gap:4px}
+            #${managerId}-portal .uh-config-row .css-105uu5g{margin-left:-13px;margin-right:0}
+            #${managerId}-portal .uh-config-description{margin:0 0 0 31px;color:light-dark(#4f4f4f,#bdbdbd);font-family:Inter, Helvetica, Arial, sans-serif;font-size:.813rem;line-height:1.25rem}
+            #${managerId}-portal .uh-config-divider{height:0;margin:14px 0;border:0;border-top:thin solid var(--uh-frame-border)}
+            #${managerId}-portal .uh-dialog-error{margin:16px 0 0;padding:10px 12px;border:1px solid #6f3333;border-radius:6px;background:#2a1515;color:#ffd6d6;font-family:Consolas, "Courier New", monospace;font-size:12px;line-height:1.35;white-space:pre-wrap;max-height:180px;overflow:auto}
+            .uh-nav-tooltip .css-1k51tf5{background-color:light-dark(#ffffff,#191919);color:light-dark(#1f1f1f,#f4f4f4);border-color:light-dark(#e8e8e8,#3a3a3a)}
+          </style><div class="uh-wrap"><div class="uh-kicker">UnifyHub</div><h1>Plugins</h1><p class="uh-subtitle">Enable, disable, import, delete, and apply UnifyHub plugins. Applying changes rebuilds the target and takes effect after restart.</p><div class="uh-meta" hidden aria-hidden="true"><b>Target</b><span data-field="target"></span><b>Root</b><span data-field="root"></span></div><div class="uh-toolbar"><div class="uh-toolbar-left">${button("Refresh", "refresh")}${button("Install plugin", "install")}</div><div class="uh-toolbar-right"><label class="uh-search-wrap" data-field="search-wrap"><span class="uh-search-icon" aria-hidden="true">${searchIcon}</span><input class="uh-search" data-field="search" placeholder="Search" type="search"><div class="MuiInputAdornment-root MuiInputAdornment-positionEnd MuiInputAdornment-outlined MuiInputAdornment-sizeMedium css-3o8z43 uh-search-clear-adornment"><button class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-1uvbf3 uh-search-clear" tabindex="0" type="button" data-action="clear-search" aria-label="Clear button">${clearIcon}</button></div></label>${button("Apply", "apply", "primary")}</div></div><div class="uh-status" data-field="status"></div><div class="uh-list" data-field="plugins"></div><div data-field="dialog"></div></div>`;
+          mountPage(page);
+          page.addEventListener("click", onPageClick);
+          page.addEventListener("change", onPageChange);
+          page.addEventListener("input", onPageInput);
+          page.addEventListener("contextmenu", onPageContextMenu);
+          document.removeEventListener("contextmenu", onPageContextMenu, true);
+          document.addEventListener("contextmenu", onPageContextMenu, true);
+          page.addEventListener("keydown", onPageKeyDown);
+          return page;
+        }
+
+        async function refresh() {
+          const api = bridge();
+          if (!api) {
+            statusText = "UnifyHub bridge is not available. Reinstall the plugin-manager plugin and restart the dummy target.";
+            render();
+            return;
+          }
+          try {
+            state = await api.listPlugins();
+            rememberAppliedConfigBaseline();
+            statusText ||= "";
+          } catch (error) {
+            statusText = error.message || String(error);
+          }
+          render();
+        }
+
+        function render() {
+          const page = ensurePage();
+          positionPage(page);
+          syncPluginTheme(page);
+          page.querySelector('[data-field="target"]').textContent = state.target || "unknown";
+          page.querySelector('[data-field="root"]').textContent = state.root || "unknown";
+          page.querySelector('[data-field="status"]').textContent = statusText;
+          const search = page.querySelector('[data-field="search"]');
+          if (search && search.value !== searchText) search.value = searchText;
+          page.querySelector('[data-field="search-wrap"]')?.classList.toggle("has-value", Boolean(searchText));
+          const clearSearch = page.querySelector(".uh-search-clear-adornment");
+          if (clearSearch) clearSearch.style.display = searchText ? "flex" : "none";
+          const list = page.querySelector('[data-field="plugins"]');
+          const normalizedSearch = searchText.trim().toLowerCase();
+          const plugins = normalizedSearch
+            ? (state.plugins || []).filter((plugin) => [plugin.id, plugin.name, plugin.description, plugin.path].some((value) => String(value || "").toLowerCase().includes(normalizedSearch)))
+            : (state.plugins || []);
+          list.innerHTML = plugins.length ? plugins.map(pluginCard).join("") : emptyState(Boolean(normalizedSearch));
+          page.querySelector('[data-field="dialog"]').innerHTML = "";
+          ensurePortalRoot().innerHTML = uninstallDialog() || applyDialog() || configDialog();
+        }
+
+        function menuItems() {
+          return [...document.querySelectorAll(`#${managerId} #manage-menu [role="menuitem"]:not([aria-disabled="true"])`)];
+        }
+
+        function focusManageMenu(index = 0) {
+          const items = menuItems();
+          if (!items.length) return;
+          const nextIndex = Math.max(0, Math.min(items.length - 1, index));
+          items.forEach((item, itemIndex) => item.tabIndex = itemIndex === nextIndex ? 0 : -1);
+          document.documentElement.classList.add("uh-keyboard-mode");
+          items[nextIndex].focus({ preventScroll: true });
+        }
+
+        function closeManageMenu() {
+          if (!openManageFor) return;
+          window.clearTimeout(manageCloseTimer);
+          closingManageFor = openManageFor;
+          openManageFor = "";
+          manageOpenedByCursor = false;
+          render();
+          manageCloseTimer = window.setTimeout(() => {
+            if (!openManageFor) {
+              closingManageFor = "";
+              document.getElementById("manage-menu")?.remove();
+            }
+          }, 120);
+        }
+
+        function closeUninstallDialog() {
+          if (!pendingUninstallId) return;
+          window.clearTimeout(dialogCloseTimer);
+          closingUninstallId = pendingUninstallId;
+          pendingUninstallId = "";
+          render();
+          dialogCloseTimer = window.setTimeout(() => {
+            if (!pendingUninstallId) {
+              closingUninstallId = "";
+              render();
+            }
+          }, 120);
+        }
+
+        function computeManageMenuPosition(buttonRect, menuHeight = 178, menuWidth = 152, options = {}) {
+          const menuGap = options.cursor ? 8 : 4;
+          const margin = 8;
+          const height = Math.max(1, menuHeight);
+          if (options.cursor) {
+            const cursorX = buttonRect?.left || margin;
+            const cursorY = buttonRect?.top || margin;
+            const spaceBelow = window.innerHeight - cursorY - menuGap - margin;
+            const spaceAbove = cursorY - menuGap - margin;
+            const opensUp = spaceBelow < height && spaceAbove > spaceBelow;
+            const available = Math.max(80, opensUp ? spaceAbove : spaceBelow);
+            const preferredTop = opensUp ? cursorY - Math.min(height, available) - menuGap : cursorY + menuGap;
+            const left = Math.max(margin, Math.min(window.innerWidth - menuWidth - margin, cursorX));
+            const top = Math.max(margin, Math.min(window.innerHeight - Math.min(height, available) - margin, preferredTop));
+            const originX = Math.max(8, Math.min(menuWidth - 8, cursorX - left));
+            const originY = opensUp ? Math.min(height, available) : 0;
+            return { top, left, maxHeight: available < height ? available : 0, origin: `${Math.round(originX)}px ${Math.round(originY)}px` };
+          }
+          const anchorTop = buttonRect?.top || margin;
+          const anchorBottom = buttonRect?.bottom || anchorTop;
+          const spaceBelow = window.innerHeight - anchorBottom - menuGap - margin;
+          const spaceAbove = anchorTop - menuGap - margin;
+          const opensUp = spaceBelow < height && spaceAbove > spaceBelow;
+          const available = Math.max(80, opensUp ? spaceAbove : spaceBelow);
+          const preferredTop = opensUp ? anchorTop - Math.min(height, available) - menuGap : anchorBottom + menuGap;
+          const top = Math.max(margin, Math.min(window.innerHeight - Math.min(height, available) - margin, preferredTop));
+          const left = Math.max(margin, Math.min(window.innerWidth - menuWidth - margin, (buttonRect?.right || menuWidth) - menuWidth));
+          const originX = Math.max(8, Math.min(menuWidth - 8, ((buttonRect?.left || left) + ((buttonRect?.width || menuWidth) / 2)) - left));
+          return { top: Math.max(margin, top), left, maxHeight: available < height ? available : 0, origin: `${Math.round(originX)}px ${opensUp ? "100%" : "0px"}` };
+        }
+
+        function refineManageMenuPosition(pluginId, options = {}) {
+          const menu = document.querySelector(`#${managerId} #manage-menu .css-cvm34e`);
+          const button = document.getElementById(`manage-button-${pluginId}`);
+          if (!menu || !button || openManageFor !== pluginId) return false;
+          const menuRect = menu.getBoundingClientRect();
+          const list = menu.querySelector(".MuiMenu-list");
+          const fullHeight = Math.max(menuRect.height, menu.scrollHeight, list?.scrollHeight || 0);
+          const next = computeManageMenuPosition(options.anchorRect || button.getBoundingClientRect(), Math.round(fullHeight), Math.round(menuRect.width || 156), options);
+          const changed =
+            Math.abs((manageMenuPosition.top || 0) - next.top) > 1 ||
+            Math.abs((manageMenuPosition.left || 0) - next.left) > 1 ||
+            manageMenuPosition.origin !== next.origin;
+          if (!changed) return false;
+          manageMenuPosition = next;
+          render();
+          return true;
+        }
+
+        function openManageMenu(pluginId, anchorRect, options = {}) {
+          window.clearTimeout(manageCloseTimer);
+          closingManageFor = "";
+          manageOpenedByCursor = !!options.cursor;
+          openManageFor = pluginId;
+          manageMenuPosition = computeManageMenuPosition(anchorRect, 149, 152, options);
+          render();
+          requestAnimationFrame(() => refineManageMenuPosition(pluginId, { ...options, anchorRect }));
+          requestAnimationFrame(() => {
+            if (openManageFor !== pluginId || options.cursor || !options.focusOnOpen) return;
+            focusManageMenu(0);
+          });
+        }
+
+        function onPageKeyDown(event) {
+          const items = menuItems();
+          if (!items.length) return;
+          const activeIndex = Math.max(0, items.indexOf(document.activeElement));
+          if (event.key === "Escape") {
+            event.preventDefault();
+            closeManageMenu();
+            return;
+          }
+          if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
+            event.preventDefault();
+            const nextIndex =
+              event.key === "Home" ? 0 :
+              event.key === "End" ? items.length - 1 :
+              event.key === "ArrowDown" ? (activeIndex + 1) % items.length :
+              (activeIndex - 1 + items.length) % items.length;
+            focusManageMenu(nextIndex);
+            return;
+          }
+          if ((event.key === "Enter" || event.key === " ") && items.includes(document.activeElement)) {
+            event.preventDefault();
+            document.activeElement.click();
+          }
+        }
+
+        async function onPageClick(event) {
+          const action = event.target.closest("[data-action]")?.dataset.action;
+          if (!action) return;
+          try {
+            if (action.startsWith("manage:")) {
+              syncOpenPagePosition();
+              const pluginId = action.slice(7);
+              const rect = event.target.closest("button")?.getBoundingClientRect();
+              const focusOnOpen = event.detail === 0 || document.documentElement.classList.contains("uh-keyboard-mode");
+              openManageMenu(pluginId, rect, { focusOnOpen });
+              return;
+            }
+            if (action === "close-manage") { closeManageMenu(); return; }
+            if (action === "dialog-cancel") { if (event.target.closest(".css-jws3r8") && !event.target.closest("button[data-action='dialog-cancel']")) return; closeUninstallDialog(); return; }
+            if (action === "clear-search") { searchText = ""; render(); document.querySelector(`#${managerId} [data-field="search"]`)?.focus({ preventScroll: true }); return; }
+            if (action === "apply") { applyDialogOpen = true; applyDialogError = ""; applyDialogBusy = false; statusText = ""; render(); return; }
+            if (action === "apply-cancel") { if (event.target.closest(".css-jws3r8") && !event.target.closest("button[data-action='apply-cancel']")) return; if (applyDialogBusy) return; applyDialogOpen = false; applyDialogError = ""; render(); return; }
+            if (action === "config-cancel") { if (event.target.closest(".css-jws3r8") && !event.target.closest("button[data-action='config-cancel']")) return; configDialogPluginId = ""; render(); return; }
+            const api = bridge();
+            if (!api) return;
+            if (action === "refresh") await refresh();
+            else if (action === "install") { statusText = "Select the plugin you wish to install."; render(); const result = await api.installPlugin(); statusText = result.canceled ? "Install canceled." : "Plugin installed. Enable it, then apply changes."; await refresh(); }
+            else if (action === "apply-confirm") { applyDialogBusy = true; applyDialogError = ""; render(); const result = await (api.restartApplyPlugins ? api.restartApplyPlugins() : api.applyPlugins()); applyDialogBusy = false; if (result.ok) { rememberAppliedConfigBaseline(true); applyDialogOpen = false; statusText = result.restarting ? "Restarting Unity Hub." : `Apply complete. Restart Unity Hub.\n${result.stdout || ""}`; } else { applyDialogError = formatApplyError(result); } render(); }
+            else if (action === "restore") { statusText = "Restoring target backup."; render(); const result = await api.restoreTarget(); statusText = result.ok ? `Restore complete. Restart Unity Hub.\n${result.stdout || ""}` : `Restore failed.\n${result.stderr || result.error || ""}`; render(); }
+            else if (action.startsWith("toggle-btn:")) { const id = action.slice(11); const plugin = (state.plugins || []).find((item) => item.id === id); if (!plugin || plugin.core) return; state = await api.setPluginEnabled(id, !plugin.enabled); statusText = `${id} ${!plugin.enabled ? "enabled" : "disabled"}. Apply changes and restart.`; render(); }
+            else if (action.startsWith("menu:config:")) { configDialogPluginId = action.slice(12); closeManageMenu(); render(); }
+            else if (action === "config-save") { if (!configDialogPluginId) return; const values = {}; document.querySelectorAll(`#${managerId} [data-config-key], #${managerId}-portal [data-config-key]`).forEach((input) => { values[input.dataset.configKey] = input.checked; }); const changedId = configDialogPluginId; state = await api.setPluginConfig(changedId, values); statusText = `${changedId} config saved. Apply changes and restart.`; configDialogPluginId = ""; render(); }
+            else if (action.startsWith("menu:explorer:")) { const id = action.slice(14); closeManageMenu(); const result = await api.openPluginFolder(id); statusText = result?.ok ? `Opened ${id} plugin folder.` : `Could not open ${id} plugin folder.`; render(); }
+            else if (action.startsWith("menu:reload:")) { const id = action.slice(12); closeManageMenu(); statusText = `${id}: plugin files reloaded in UI. Use Apply enabled to rebuild target.`; await refresh(); }
+            else if (action.startsWith("menu:uninstall:")) { window.clearTimeout(dialogCloseTimer); closingUninstallId = ""; pendingUninstallId = action.slice(15); closeManageMenu(); }
+            
+            else if (action === "dialog-confirm") { if (!pendingUninstallId) return; const id = pendingUninstallId; pendingUninstallId = ""; state = await api.deletePlugin(id); statusText = `Uninstalled ${id}. Apply changes and restart.`; render(); }
+          } catch (error) {
+            statusText = error.message || String(error);
+            render();
+          }
+        }
+
+        async function onPageChange(event) {
+          if (event.target.dataset.configKey) {
+            const box = event.target.closest(".css-11p8s00");
+            if (box) {
+              box.classList.toggle("Mui-checked", event.target.checked);
+              const svg = box.querySelector("svg");
+              if (svg) svg.outerHTML = checkedIcon(event.target.checked);
+            }
+            return;
+          }
+          const action = event.target.dataset.action;
+          if (!action?.startsWith("toggle:")) return;
+          const api = bridge();
+          const id = action.slice(7);
+          try {
+            state = await api.setPluginEnabled(id, event.target.checked);
+            statusText = `${id} ${event.target.checked ? "enabled" : "disabled"}. Apply changes and restart.`;
+          } catch (error) {
+            statusText = error.message || String(error);
+          }
+          render();
+        }
+
+        function onPageInput(event) {
+          if (event.target.dataset.field !== "search") return;
+          searchText = event.target.value || "";
+          render();
+          event.target.focus({ preventScroll: true });
+        }
+
+        function onPageContextMenu(event) {
+          const page = document.getElementById(managerId);
+          const list = page?.querySelector('[data-field="plugins"]');
+          const pathCard = event.composedPath?.().find((node) => node?.classList?.contains?.("uh-plugin-card"));
+          const card = pathCard || event.target.closest?.(".uh-plugin-card");
+          if (!list || !card || !list.contains(card)) return;
+          const rect = card.getBoundingClientRect();
+          if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) return;
+          const pluginId = card.dataset.pluginId;
+          if (!pluginId) return;
+          event.preventDefault();
+          event.stopPropagation();
+          syncOpenPagePosition();
+          openManageMenu(pluginId, {
+            left: event.clientX,
+            right: event.clientX,
+            top: event.clientY,
+            bottom: event.clientY,
+            width: 0,
+            height: 0
+          }, { cursor: true });
+        }
+
+        function formatApplyError(result) {
+          const raw = result?.stderr || result?.error || "Unknown apply error.";
+          if (String(raw).includes("EBUSY") || String(raw).includes("resource busy or locked")) {
+            return "Unity Hub could not restart automatically.\n\nClose Unity Hub and try Restart again.";
+          }
+          return "The changes could not finish.\n\nTry Restart again.";
+        }
+
+        async function showManager() {
+          ensureNav();
+          syncPluginTheme();
+          observeLayoutTargets();
+          const page = ensurePage();
+          page.classList.add("is-open");
+          setPluginNavActive(true);
+          repairPluginNavActive(900);
+          positionPage(page);
+          schedulePositionSync(650);
+          await refresh();
+        }
+
+        function syncPluginRoute() {
+          if (location.hash === "#plugins") {
+            void showManager();
+          }
+        }
+
+        function hideManagerOnNativeNav(event) {
+          if (event.target.closest(`#${navId}`) || event.target.closest(`#${managerId}`)) return;
+          if (event.target.closest(".MuiDialog-root, .MuiModal-root, .MuiPopover-root, [role='dialog']")) return;
+          if (event.target.closest(".cloudui-side-nav-footer")) return;
+          if (event.target.closest(".cloudui-side-nav-row")) {
+            document.getElementById(managerId)?.classList.remove("is-open");
+            setPluginNavActive(false);
+          }
+        }
+
+        const observer = new MutationObserver(() => {
+          ensureNav();
+          observeLayoutTargets();
+          syncPluginTheme();
+          reselectPluginNavIfOpen();
+          schedulePositionSync(320);
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+        const themeObserver = new MutationObserver(() => {
+          syncPluginTheme();
+          reselectPluginNavIfOpen();
+        });
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "style"] });
+        if (document.body) themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class", "style"] });
+        document.addEventListener("keydown", (event) => {
+          if (event.metaKey || event.ctrlKey || event.altKey) return;
+          if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "Tab", "Enter", " "].includes(event.key)) {
+            document.documentElement.classList.add("uh-keyboard-mode");
+          }
+        }, true);
+        document.addEventListener("pointerdown", () => document.documentElement.classList.remove("uh-keyboard-mode"), true);
+        document.addEventListener("mousedown", () => document.documentElement.classList.remove("uh-keyboard-mode"), true);
+        document.addEventListener("focusin", (event) => {
+          if (!document.getElementById(managerId)?.classList.contains("is-open")) return;
+          if (event.target.closest(`#${navId}`) || event.target.closest(`#${managerId}`)) return;
+          if (event.target.closest(".cloudui-side-nav-row")) reselectPluginNavIfOpen();
+        }, true);
+        document.addEventListener("keydown", (event) => {
+          if (!["ArrowUp", "ArrowDown", "Home", "End", "Tab"].includes(event.key)) return;
+          if (document.getElementById(managerId)?.classList.contains("is-open")) reselectPluginNavIfOpen();
+        }, true);
+        document.addEventListener("click", (event) => {
+          const collapseControl = event.target.closest("[data-testid='sidenav-collapse'], [aria-label='collapse'], [aria-label='expand'], [aria-expanded]");
+          if (collapseControl) schedulePositionSync(900);
+          hideManagerOnNativeNav(event);
+        }, true);
+        document.addEventListener("transitionend", () => schedulePositionSync(240), true);
+        window.addEventListener("resize", () => schedulePositionSync(320));
+        window.addEventListener("hashchange", syncPluginRoute);
+        installStartupOverflowGuard();
+        ensureNav();
+        observeLayoutTargets();
+        syncPluginRoute();
+        setTimeout(() => { ensureNav(); observeLayoutTargets(); schedulePositionSync(500); }, 500);
+        setTimeout(() => { ensureNav(); observeLayoutTargets(); schedulePositionSync(500); }, 1500);
+        setTimeout(syncPluginRoute, 250);
+        setTimeout(syncPluginRoute, 1200);
+        console.log("[UnifyHub] plugin manager renderer loaded");
+      })();
+    </script>
+  </body>

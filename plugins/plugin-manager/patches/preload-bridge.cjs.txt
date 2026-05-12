@@ -1,0 +1,14 @@
+﻿var unifyHubApi = {
+	listPlugins: () => ipcRenderer.invoke("unifyhub:list-plugins"),
+	setPluginEnabled: (pluginId, enabled) => ipcRenderer.invoke("unifyhub:set-plugin-enabled", pluginId, enabled),
+	setPluginConfig: (pluginId, values) => ipcRenderer.invoke("unifyhub:set-plugin-config", pluginId, values),
+	deletePlugin: (pluginId) => ipcRenderer.invoke("unifyhub:delete-plugin", pluginId),
+	installPlugin: () => ipcRenderer.invoke("unifyhub:install-plugin"),
+	openPluginFolder: (pluginId) => ipcRenderer.invoke("unifyhub:open-plugin-folder", pluginId),
+	applyPlugins: () => ipcRenderer.invoke("unifyhub:apply-plugins"),
+	restartApplyPlugins: () => ipcRenderer.invoke("unifyhub:restart-apply-plugins"),
+	restoreTarget: () => ipcRenderer.invoke("unifyhub:restore-target")
+};
+api.unifyHub = unifyHubApi;
+contextBridge.exposeInMainWorld("api", api);
+contextBridge.exposeInMainWorld("unifyHub", unifyHubApi);

@@ -1,0 +1,6 @@
+		this.notifyParent(this.getStatus());
+		installUnifyHubTaskbarProgress();
+		updateUnifyHubTaskbarProgressFromDownload(this.getStatus());
+	}
+	/** *********************
+	State Machine Actions

@@ -1,0 +1,2 @@
+								this.#eventBroadcaster?.broadcast(RENDERER_EVENTS.EDITOR_INSTALL_FINISH, installerItem.metadata.itemName);
+								notifyUnifyHubEditorInstallComplete(installerItem.metadata);

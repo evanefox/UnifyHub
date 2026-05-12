@@ -1,0 +1,50 @@
+{
+  "id": "taskbar-progress",
+  "name": "Taskbar Progress",
+  "version": "1.0.0",
+  "description": "Make Unity Hub download progress visible in the Windows taskbar.",
+  "replacements": [
+    {
+      "filePattern": "build/main/EventBroadcaster-*.js",
+      "find": "import { t as IOutputServiceId } from \"./output-service-BK5FAE9Y.js\";",
+      "replaceFromFile": "patches/event-broadcaster-support.js.txt",
+      "alreadyPatchedFind": "installUnifyHubTaskbarProgress",
+      "once": true
+    },
+    {
+      "filePattern": "build/main/EventBroadcaster-*.js",
+      "find": "\t\tif (this.#isRendererReady) this.#broadcastToWindows(eventName, ...content);",
+      "replaceFromFile": "patches/event-broadcaster-taskbar-progress.js.txt",
+      "alreadyPatchedFind": "updateUnifyHubTaskbarProgress(eventName, ...content);",
+      "once": true
+    },
+    {
+      "filePattern": "build/main/app-*.js",
+      "find": "var STATE_CHANGE_HANDLER_SUPPRESSING_STATES = [",
+      "replaceFromFile": "patches/download-progress-support.js.txt",
+      "alreadyPatchedFind": "updateUnifyHubTaskbarProgressFromDownload",
+      "once": true
+    },
+    {
+      "filePattern": "build/main/app-*.js",
+      "find": "\t\tthis.notifyParent(this.getStatus());\n\t}\n\t/** *********************\n\tState Machine Actions",
+      "replaceFromFile": "patches/download-progress-live.js.txt",
+      "alreadyPatchedFind": "updateUnifyHubTaskbarProgressFromDownload(this.getStatus());",
+      "once": true
+    },
+    {
+      "filePattern": "build/main/app-*.js",
+      "find": "var BROADCAST_DEBOUNCE_TIME = 500;\nvar InstallationManager = class {",
+      "replaceFromFile": "patches/install-toast-support.js.txt",
+      "alreadyPatchedFind": "notifyUnifyHubEditorInstallComplete",
+      "once": true
+    },
+    {
+      "filePattern": "build/main/app-*.js",
+      "find": "\t\t\t\t\t\t\t\tthis.#eventBroadcaster?.broadcast(RENDERER_EVENTS.EDITOR_INSTALL_FINISH, installerItem.metadata.itemName);",
+      "replaceFromFile": "patches/install-toast-call.js.txt",
+      "alreadyPatchedFind": "notifyUnifyHubEditorInstallComplete(installerItem.metadata);",
+      "once": true
+    }
+  ]
+}
