@@ -118,6 +118,134 @@
 					}));
 				return { root: __uhDataDir, projectRoot: __uhRoot, target: __uhTarget, targetRoot: __uhTargetRootPath, plugins };
 			}
+			function __uhPluginEnabled(plugin, state = __uhReadState()) {
+				return plugin.core ? true : state.disabledByUser?.[plugin.id] === true ? false : (__uhDefaultEnabledPlugins.has(plugin.id) || Boolean(state.enabled?.[plugin.id]));
+			}
+			function __uhRuntimeEntry(plugin, kind) {
+				const runtime = plugin.runtime;
+				if (!runtime) return "";
+				if (typeof runtime === "string") return kind === "renderer" ? runtime : "";
+				if (typeof runtime !== "object") return "";
+				return typeof runtime[kind] === "string" ? runtime[kind] : "";
+			}
+			function __uhAssertInsidePlugin(plugin, entryPath) {
+				if (!entryPath || path.isAbsolute(entryPath)) throw new Error(`Invalid runtime entry for ${plugin.id}.`);
+				const resolved = path.resolve(plugin.pluginDir, entryPath);
+				const relative = path.relative(plugin.pluginDir, resolved);
+				if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) throw new Error(`Runtime entry escapes plugin folder: ${plugin.id}`);
+				return resolved;
+			}
+			function __uhEnabledRuntimePlugins(kind) {
+				const state = __uhReadState();
+				const byId = new Map();
+				for (const source of ["bundled", "user"]) {
+					const dir = source === "bundled" ? __uhBundledPluginsDir : __uhPluginsDir;
+					if (!fs.existsSync(dir)) continue;
+					for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+						if (!entry.isDirectory()) continue;
+						const plugin = __uhPluginManifest(entry.name, source);
+						if (!plugin || byId.has(plugin.id) || !__uhPluginEnabled(plugin, state)) continue;
+						const runtimeEntry = __uhRuntimeEntry(plugin, kind);
+						if (!runtimeEntry) continue;
+						byId.set(plugin.id, { plugin, runtimeEntry });
+					}
+				}
+				return [...byId.values()];
+			}
+			function __uhPluginConfig(pluginId) {
+				const plugin = __uhPluginManifest(pluginId, "bundled") || __uhPluginManifest(pluginId, "user");
+				if (!plugin) throw new Error(`Unknown plugin: ${pluginId}`);
+				const state = __uhReadState();
+				const schema = Array.isArray(plugin.config) ? plugin.config : [];
+				const values = {};
+				for (const item of schema) values[item.key] = state.config?.[plugin.id]?.[item.key] ?? item.default ?? false;
+				return values;
+			}
+			function __uhSetPluginConfigValue(pluginId, key, value) {
+				const plugin = __uhPluginManifest(pluginId, "bundled") || __uhPluginManifest(pluginId, "user");
+				if (!plugin) throw new Error(`Unknown plugin: ${pluginId}`);
+				const schema = Array.isArray(plugin.config) ? plugin.config : [];
+				const item = schema.find((entry) => entry.key === key);
+				if (!item) throw new Error(`Unknown config key for ${pluginId}: ${key}`);
+				const state = __uhReadState();
+				state.config ||= {};
+				state.config[pluginId] ||= {};
+				state.config[pluginId][key] = item.type === "checkbox" ? Boolean(value) : value;
+				__uhWriteJson(__uhStatePath, state);
+				return __uhPluginConfig(pluginId);
+			}
+			function __uhMainRuntimeContext(plugin) {
+				const logPrefix = `[UnifyHub:${plugin.id}]`;
+				return Object.freeze({
+					plugin: Object.freeze({ id: plugin.id, name: plugin.name || plugin.id, version: plugin.version || "", path: plugin.pluginDir, bundled: plugin.bundled }),
+					config: Object.freeze({
+						get: (key, fallback = undefined) => {
+							const values = __uhPluginConfig(plugin.id);
+							return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : fallback;
+						},
+						set: (key, value) => __uhSetPluginConfigValue(plugin.id, key, value)
+					}),
+					log: (...args) => console.log(logPrefix, ...args),
+					warn: (...args) => console.warn(logPrefix, ...args),
+					error: (...args) => console.error(logPrefix, ...args),
+					window: Object.freeze({
+						all: () => BrowserWindow.getAllWindows().filter((window) => !window.isDestroyed?.()),
+						focused: () => BrowserWindow.getFocusedWindow(),
+						focus: () => {
+							const window = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows().find((item) => !item.isDestroyed?.());
+							if (!window) return false;
+							if (window.isMinimized?.()) window.restore();
+							window.show?.();
+							window.focus?.();
+							return true;
+						}
+					}),
+					taskbar: Object.freeze({
+						setProgress: (value, options = {}) => {
+							const window = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows().find((item) => !item.isDestroyed?.());
+							if (!window?.setProgressBar) return false;
+							window.setProgressBar(Number(value), options);
+							return true;
+						},
+						clear: () => {
+							for (const window of BrowserWindow.getAllWindows()) if (!window.isDestroyed?.()) window.setProgressBar?.(-1);
+							return true;
+						}
+					})
+				});
+			}
+			function __uhStartMainRuntimePlugins() {
+				if (globalThis.__unifyHubMainRuntimeStarted) return;
+				globalThis.__unifyHubMainRuntimeStarted = true;
+				for (const { plugin, runtimeEntry } of __uhEnabledRuntimePlugins("main")) {
+					try {
+						const runtimePath = __uhAssertInsidePlugin(plugin, runtimeEntry);
+						if (!fs.existsSync(runtimePath)) throw new Error(`Runtime file not found: ${runtimeEntry}`);
+						const resolvedModule = require.resolve(runtimePath);
+						delete require.cache[resolvedModule];
+						const moduleValue = require(runtimePath);
+						const start = typeof moduleValue === "function" ? moduleValue : moduleValue?.start;
+						if (typeof start === "function") start(__uhMainRuntimeContext(plugin));
+					} catch (error) {
+						console.error(`[UnifyHub:${plugin.id}] main runtime failed`, error);
+					}
+				}
+			}
+			function __uhListRendererRuntimePlugins() {
+				return __uhEnabledRuntimePlugins("renderer").map(({ plugin, runtimeEntry }) => {
+					const runtimePath = __uhAssertInsidePlugin(plugin, runtimeEntry);
+					if (!fs.existsSync(runtimePath)) throw new Error(`Runtime file not found: ${plugin.id}/${runtimeEntry}`);
+					return {
+						id: plugin.id,
+						name: plugin.name || plugin.id,
+						version: plugin.version || "",
+						description: plugin.description || "",
+						bundled: plugin.bundled,
+						config: __uhPluginConfig(plugin.id),
+						code: fs.readFileSync(runtimePath, "utf8")
+					};
+				});
+			}
 			function __uhRunContainer(args) {
 				return new Promise((resolve) => {
 					const child = spawn("node", [path.join(__uhRoot, "src", "unifyhub.mjs"), ...args], { cwd: __uhRoot, env: { ...process.env, UNIFYHUB_HOME: __uhRoot, UNIFYHUB_TARGET: __uhTarget, UNIFYHUB_TARGET_ROOT: __uhTargetRootPath } });
@@ -170,7 +298,11 @@ if (result.status === 0) {
 				setTimeout(() => app.quit(), 80);
 				return { ok: true, restarting: true };
 			}
+			__uhStartMainRuntimePlugins();
 			__uhHandle("unifyhub:list-plugins", () => __uhListPlugins());
+			__uhHandle("unifyhub:list-renderer-runtime-plugins", () => __uhListRendererRuntimePlugins());
+			__uhHandle("unifyhub:get-plugin-config", (_event, pluginId) => __uhPluginConfig(pluginId));
+			__uhHandle("unifyhub:set-plugin-config-value", (_event, pluginId, key, value) => __uhSetPluginConfigValue(pluginId, key, value));
 			__uhHandle("unifyhub:set-plugin-enabled", (_event, pluginId, enabled) => {
 				const manifest = __uhPluginManifest(pluginId, "bundled") || __uhPluginManifest(pluginId, "user");
 				if (!manifest) throw new Error(`Unknown plugin: ${pluginId}`);

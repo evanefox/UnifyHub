@@ -13,14 +13,9 @@
       "default": false
     }
   ],
-  "replacements": [
-    {
-      "filePattern": "build/main/app-*.js",
-      "find": "TEXT_TO_FIND_IN_TARGET_FILE",
-      "replaceFromFile": "patches/main.js.txt",
-      "alreadyPatchedFind": "UNIQUE_TEXT_AFTER_PATCH",
-      "once": true,
-      "required": false
-    }
-  ]
+  "runtime": {
+    "renderer": "runtime/renderer.js",
+    "main": "runtime/main.cjs"
+  },
+  "replacements": []
 }

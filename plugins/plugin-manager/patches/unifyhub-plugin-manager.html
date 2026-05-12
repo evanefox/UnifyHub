@@ -14,6 +14,8 @@
       (() => {
         const managerId = "unifyhub-plugin-manager";
         const navId = "unifyhub-plugin-manager-nav";
+        const runtimePageId = "unifyhub-runtime-page";
+        const runtimeNavPrefix = "unifyhub-runtime-nav";
         const gearIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"></path></svg>';
         const chevronDownIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>';
         const slidersIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M40,88H73a32,32,0,0,0,62,0h81a8,8,0,0,0,0-16H135a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16Zm64-24A16,16,0,1,1,88,80,16,16,0,0,1,104,64ZM216,168H199a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16h97a32,32,0,0,0,62,0h17a8,8,0,0,0,0-16Zm-48,24a16,16,0,1,1,16-16A16,16,0,0,1,168,192Z"></path></svg>';
@@ -45,6 +47,8 @@
         let navTooltipCloseTimer = 0;
         let navTooltipFrame = 0;
         let navTooltipAnchor = null;
+        let runtimePluginsLoaded = false;
+        const runtimePages = new Map();
 
         function bridge() {
           return window.unifyHub || window.api?.unifyHub;
@@ -56,17 +60,17 @@
           style.id = `${managerId}-overflow-guard`;
           style.textContent = `html,body{overflow:hidden!important}
             #app > .MuiModal-root,#app > .MuiPopover-root,#app > .MuiDialog-root,#app .MuiModal-root:not(#manage-menu):not(.css-12m6313):not(.css-1egf66k){z-index:2400!important}
-            #${navId}.uh-nav-light .cloudui-side-nav-row{color:#202020!important}
-            #${navId}.uh-nav-light .cloudui-side-nav-row .css-birmn4{color:#838383!important}
-            #${navId}.uh-nav-light .cloudui-side-nav-row .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row .css-1igvne2{color:#202020!important}
-            #${navId}.uh-nav-light .cloudui-side-nav-row:hover,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"]{background-color:#e8e8e8!important;color:#202020!important}
-            #${navId}.uh-nav-light .cloudui-side-nav-row:hover .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-birmn4{color:#202020!important}
-            #${navId}.uh-nav-light .cloudui-side-nav-row:hover .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row:hover .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-1igvne2{color:#202020!important}
-            #${navId} .css-1w8onnq{transition:margin 0.25s}
-            #${navId} .css-1w8onnq>*{transition:margin 0.25s, opacity 0.25s}
-            #${navId} .css-gbx5td{height:auto;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:1;margin-left:8px;transition:margin 0.25s, opacity 0.25s;will-change:margin-left,opacity}
-            #${navId} .css-ers32x,#${navId} .css-1igvne2{white-space:nowrap}
-            #${navId}.uh-nav-collapsed .css-gbx5td{height:20px;opacity:0;margin-left:0;pointer-events:none}
+            #${navId}.uh-nav-light .cloudui-side-nav-row,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row{color:#202020!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row .css-birmn4,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row .css-birmn4{color:#838383!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row .css-1igvne2,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row .css-ers32x,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row .css-1igvne2{color:#202020!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row:hover,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"],.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row:hover,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.uh-nav-active,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.css-nvff64,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row[aria-current="page"]{background-color:#e8e8e8!important;color:#202020!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row:hover .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-birmn4,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-birmn4,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row:hover .css-birmn4,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-birmn4,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-birmn4,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-birmn4,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-birmn4{color:#202020!important}
+            #${navId}.uh-nav-light .cloudui-side-nav-row:hover .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row:hover .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-1igvne2,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-ers32x,#${navId}.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-1igvne2,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row:hover .css-ers32x,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row:hover .css-1igvne2,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-ers32x,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.uh-nav-active .css-1igvne2,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-ers32x,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.css-1bfpdx4 .css-1igvne2,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-ers32x,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row.css-nvff64 .css-1igvne2,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-ers32x,.uh-runtime-nav.uh-nav-light .cloudui-side-nav-row[aria-current="page"] .css-1igvne2{color:#202020!important}
+            #${navId} .css-1w8onnq,.uh-runtime-nav .css-1w8onnq{transition:margin 0.25s}
+            #${navId} .css-1w8onnq>*,.uh-runtime-nav .css-1w8onnq>*{transition:margin 0.25s, opacity 0.25s}
+            #${navId} .css-gbx5td,.uh-runtime-nav .css-gbx5td{height:auto;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:1;margin-left:8px;transition:margin 0.25s, opacity 0.25s;will-change:margin-left,opacity}
+            #${navId} .css-ers32x,#${navId} .css-1igvne2,.uh-runtime-nav .css-ers32x,.uh-runtime-nav .css-1igvne2{white-space:nowrap}
+            #${navId}.uh-nav-collapsed .css-gbx5td,.uh-runtime-nav.uh-nav-collapsed .css-gbx5td{height:20px;opacity:0;margin-left:0;pointer-events:none}
             .uh-nav-tooltip{opacity:1;transform-origin:left center}
             .uh-nav-tooltip .css-1k51tf5{position:relative;background-color:light-dark(#ffffff,#191919);color:light-dark(#1f1f1f,#f4f4f4);border:1px solid light-dark(#e8e8e8,#3a3a3a);border-radius:6px;box-shadow:0px 4px 8px -2px rgba(0,0,0,.18);font-family:Inter, Helvetica, Arial, sans-serif;font-size:.875rem;line-height:1.25rem;font-weight:400;padding:4px 10px;max-width:300px;animation:unifyhub-tooltip-open 135ms cubic-bezier(0.4,0,0.2,1) both;transform-origin:left center}
             .uh-nav-tooltip.is-closing .css-1k51tf5{animation:unifyhub-tooltip-close 120ms cubic-bezier(0.4,0,0.2,1) both}
@@ -109,10 +113,15 @@
 
         function syncPluginNavCollapseState() {
           const nav = document.getElementById(navId);
-          if (!nav) return;
           const collapsed = nativeSideNavCollapsed();
-          nav.classList.toggle("uh-nav-collapsed", collapsed);
-          nav.classList.toggle("uh-nav-expanded", !collapsed);
+          if (nav) {
+            nav.classList.toggle("uh-nav-collapsed", collapsed);
+            nav.classList.toggle("uh-nav-expanded", !collapsed);
+          }
+          document.querySelectorAll(".uh-runtime-nav").forEach((runtimeNav) => {
+            runtimeNav.classList.toggle("uh-nav-collapsed", collapsed);
+            runtimeNav.classList.toggle("uh-nav-expanded", !collapsed);
+          });
         }
 
         function setPluginNavActive(active) {
@@ -238,7 +247,9 @@
             const hasLightNavClasses = [...document.querySelectorAll(".cloudui-side-nav-row")]
               .filter((row) => !row.closest(`#${navId}`))
               .some((row) => row.classList.contains("css-g720yb") || row.classList.contains("css-1bfpdx4"));
-            nav.classList.toggle("uh-nav-light", hasLightNavClasses || isLightColor(getComputedStyle(sidebar).backgroundColor));
+            const light = hasLightNavClasses || isLightColor(getComputedStyle(sidebar).backgroundColor);
+            nav.classList.toggle("uh-nav-light", light);
+            document.querySelectorAll(".uh-runtime-nav").forEach((runtimeNav) => runtimeNav.classList.toggle("uh-nav-light", light));
             applyPluginNavVisualState();
             syncPluginNavCollapseState();
           }
@@ -248,7 +259,9 @@
 
         function openedPage() {
           const page = document.getElementById(managerId);
-          return page?.classList.contains("is-open") ? page : null;
+          if (page?.classList.contains("is-open")) return page;
+          const runtimePage = document.getElementById(runtimePageId);
+          return runtimePage?.classList.contains("is-open") ? runtimePage : null;
         }
 
         function syncOpenPagePosition() {
@@ -325,6 +338,162 @@
           return span;
         }
 
+        function runtimeNavRow(page) {
+          const span = document.createElement("span");
+          span.id = `${runtimeNavPrefix}-${page.id}`;
+          span.className = "uh-runtime-nav";
+          span.dataset.runtimePageId = page.id;
+          const label = escapeHtml(page.label || page.id);
+          span.innerHTML = `<a class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textDefault MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorDefault MuiButton-fullWidth MuiButton-root MuiButton-text MuiButton-textDefault MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorDefault MuiButton-fullWidth cloudui-side-nav-row css-3poyno" tabindex="0" role="button" aria-label="${label}"><div class="MuiStack-root css-1w8onnq"><div class="MuiBox-root css-birmn4">${page.icon || plugIcon}</div><div class="MuiBox-root css-gbx5td"><div class="MuiBox-root css-0"><div class="MuiTypography-root MuiTypography-subtitle2 css-ers32x">${label}</div></div></div></div></a>`;
+          syncPluginNavCollapseState();
+          const link = span.querySelector("a");
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            hideNavTooltip();
+            showRuntimePage(page.id);
+          });
+          return span;
+        }
+
+        function ensureRuntimeNav(page) {
+          const list = sideNavList();
+          if (!list || document.getElementById(`${runtimeNavPrefix}-${page.id}`)) return;
+          const pluginNav = document.getElementById(navId);
+          if (pluginNav) pluginNav.insertAdjacentElement("afterend", runtimeNavRow(page));
+          else list.appendChild(runtimeNavRow(page));
+          syncPluginTheme();
+        }
+
+        function ensureRuntimePage() {
+          let page = document.getElementById(runtimePageId);
+          if (page) return page;
+          page = document.createElement("div");
+          page.id = runtimePageId;
+          page.innerHTML = `<style>
+            #${runtimePageId}{position:absolute;inset:0;z-index:1;background:light-dark(#ffffff,#131313);color:light-dark(#1f1f1f,rgb(238,238,238));font-family:Inter,system-ui,sans-serif;display:none;overflow:hidden auto;box-sizing:border-box}
+            #${runtimePageId}.is-open{display:block}
+            #${runtimePageId} .uh-runtime-wrap{width:calc(100% - 64px);max-width:none;margin:0 auto;padding:36px 0 48px;box-sizing:border-box}
+            #${runtimePageId} .uh-runtime-kicker{color:light-dark(#6e6e6e,#a6a6a6);font-size:12px;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0}
+            #${runtimePageId} h1{font-size:28px;line-height:1.2;margin:0 0 20px;font-weight:650;color:light-dark(#111111,#f5f5f5);letter-spacing:0}
+            #${runtimePageId} .uh-runtime-content{font-size:14px;line-height:1.5}
+            #${runtimePageId} .uh-runtime-content button{height:32px;border-radius:6px;border:1px solid light-dark(#cbcbcb,rgb(58,58,58));background:transparent;color:inherit;font:inherit;font-weight:600;padding:0 12px;cursor:pointer}
+            #${runtimePageId} .uh-runtime-content button:hover{background:light-dark(rgba(0,0,0,.04),rgba(255,255,255,.07))}
+          </style><div class="uh-runtime-wrap"><div class="uh-runtime-kicker">UnifyHub</div><h1 data-field="title"></h1><div class="uh-runtime-content" data-field="content"></div></div>`;
+          document.body.appendChild(page);
+          return page;
+        }
+
+        function closeAllUnifyHubPages() {
+          document.getElementById(managerId)?.classList.remove("is-open");
+          document.getElementById(runtimePageId)?.classList.remove("is-open");
+        }
+
+        function setRuntimeNavActive(pageId) {
+          setPluginNavActive(false);
+          document.querySelectorAll(".uh-runtime-nav .cloudui-side-nav-row").forEach((row) => {
+            const active = row.closest(".uh-runtime-nav")?.dataset.runtimePageId === pageId;
+            row.classList.toggle("uh-nav-active", active);
+            if (active) row.setAttribute("aria-current", "page");
+            else row.removeAttribute("aria-current");
+            setPluginNavNativeClass(row, active);
+          });
+          applyPluginNavVisualState();
+        }
+
+        function showRuntimePage(pageId) {
+          const definition = runtimePages.get(pageId);
+          if (!definition) return;
+          ensureNav();
+          syncPluginTheme();
+          observeLayoutTargets();
+          const page = ensureRuntimePage();
+          closeAllUnifyHubPages();
+          page.classList.add("is-open");
+          setRuntimeNavActive(pageId);
+          positionPage(page);
+          schedulePositionSync(650);
+          const title = page.querySelector('[data-field="title"]');
+          const content = page.querySelector('[data-field="content"]');
+          title.textContent = definition.title || definition.label || definition.id;
+          content.textContent = "";
+          try {
+            const result = typeof definition.render === "function" ? definition.render(definition.ctx) : definition.render;
+            if (result instanceof Node) content.appendChild(result);
+            else if (typeof result === "string") content.innerHTML = result;
+            else if (result != null) content.textContent = String(result);
+          } catch (error) {
+            content.textContent = error.message || String(error);
+          }
+        }
+
+        function registerRuntimePage(plugin, options) {
+          const id = `${plugin.id}:${String(options?.id || "page").replace(/[^a-z0-9._:-]/gi, "-")}`;
+          const page = {
+            id,
+            pluginId: plugin.id,
+            label: options?.label || plugin.name || plugin.id,
+            title: options?.title || options?.label || plugin.name || plugin.id,
+            icon: options?.icon || plugIcon,
+            render: options?.render || (() => ""),
+            ctx: null
+          };
+          runtimePages.set(id, page);
+          ensureRuntimeNav(page);
+          return { id, show: () => showRuntimePage(id), remove: () => { runtimePages.delete(id); document.getElementById(`${runtimeNavPrefix}-${id}`)?.remove(); } };
+        }
+
+        function runtimeContext(plugin) {
+          const ctx = {
+            plugin,
+            config: plugin.config || {},
+            log: (...args) => console.log(`[UnifyHub:${plugin.id}]`, ...args),
+            ui: {
+              addSidebarPage: (options) => {
+                const registration = registerRuntimePage(plugin, options);
+                const page = runtimePages.get(registration.id);
+                if (page) page.ctx = ctx;
+                return registration;
+              }
+            },
+            settings: {
+              get: async (key, fallback) => {
+                const values = await bridge()?.getPluginConfig?.(plugin.id);
+                return Object.prototype.hasOwnProperty.call(values || {}, key) ? values[key] : fallback;
+              },
+              set: (key, value) => bridge()?.setPluginConfigValue?.(plugin.id, key, value)
+            }
+          };
+          return ctx;
+        }
+
+        async function loadRuntimePlugins() {
+          if (runtimePluginsLoaded) return;
+          runtimePluginsLoaded = true;
+          const api = bridge();
+          if (!api?.listRendererRuntimePlugins) return;
+          let plugins = [];
+          try {
+            plugins = await api.listRendererRuntimePlugins();
+          } catch (error) {
+            console.error("[UnifyHub] renderer runtime discovery failed", error);
+            return;
+          }
+          window.unifyHubRuntime = window.unifyHubRuntime || { pages: runtimePages };
+          for (const plugin of plugins) {
+            try {
+              const ctx = runtimeContext(plugin);
+              const module = { exports: {} };
+              const startFactory = new Function("ctx", "module", "exports", plugin.code);
+              startFactory(ctx, module, module.exports);
+              const start = typeof module.exports === "function" ? module.exports : module.exports?.start;
+              if (typeof start === "function") start(ctx);
+            } catch (error) {
+              console.error(`[UnifyHub:${plugin.id}] renderer runtime failed`, error);
+            }
+          }
+        }
+
         function sideNavCollapsed() {
           const row = document.querySelector(`#${navId} .cloudui-side-nav-row`);
           const labelBox = row?.querySelector(".css-gbx5td");
@@ -384,11 +553,16 @@
 
         function ensureNav() {
           const list = sideNavList();
-          if (!list || document.getElementById(navId)) return;
+          if (!list) return;
+          if (document.getElementById(navId)) {
+            runtimePages.forEach((page) => ensureRuntimeNav(page));
+            return;
+          }
           const rows = [...list.querySelectorAll(":scope > span")];
           const licenses = rows.find((row) => labelOf(row) === "Licenses");
           if (licenses) licenses.insertAdjacentElement("afterend", navRow());
           else list.appendChild(navRow());
+          runtimePages.forEach((page) => ensureRuntimeNav(page));
           syncPluginTheme();
           if (document.getElementById(managerId)?.classList.contains("is-open")) setPluginNavActive(true);
         }
@@ -1141,6 +1315,7 @@
           syncPluginTheme();
           observeLayoutTargets();
           const page = ensurePage();
+          document.getElementById(runtimePageId)?.classList.remove("is-open");
           page.classList.add("is-open");
           setPluginNavActive(true);
           repairPluginNavActive(900);
@@ -1156,11 +1331,11 @@
         }
 
         function hideManagerOnNativeNav(event) {
-          if (event.target.closest(`#${navId}`) || event.target.closest(`#${managerId}`)) return;
+          if (event.target.closest(`#${navId}`) || event.target.closest(`#${managerId}`) || event.target.closest(".uh-runtime-nav") || event.target.closest(`#${runtimePageId}`)) return;
           if (event.target.closest(".MuiDialog-root, .MuiModal-root, .MuiPopover-root, [role='dialog']")) return;
           if (event.target.closest(".cloudui-side-nav-footer")) return;
           if (event.target.closest(".cloudui-side-nav-row")) {
-            document.getElementById(managerId)?.classList.remove("is-open");
+            closeAllUnifyHubPages();
             setPluginNavActive(false);
           }
         }
@@ -1207,9 +1382,10 @@
         installStartupOverflowGuard();
         ensureNav();
         observeLayoutTargets();
+        void loadRuntimePlugins();
         syncPluginRoute();
-        setTimeout(() => { ensureNav(); observeLayoutTargets(); schedulePositionSync(500); }, 500);
-        setTimeout(() => { ensureNav(); observeLayoutTargets(); schedulePositionSync(500); }, 1500);
+        setTimeout(() => { ensureNav(); void loadRuntimePlugins(); observeLayoutTargets(); schedulePositionSync(500); }, 500);
+        setTimeout(() => { ensureNav(); void loadRuntimePlugins(); observeLayoutTargets(); schedulePositionSync(500); }, 1500);
         setTimeout(syncPluginRoute, 250);
         setTimeout(syncPluginRoute, 1200);
         console.log("[UnifyHub] plugin manager renderer loaded");
