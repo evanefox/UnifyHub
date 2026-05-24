@@ -405,6 +405,7 @@
         }
 
         function closeAllUnifyHubPages() {
+          dismissManageMenu();
           document.getElementById(managerId)?.classList.remove("is-open");
           document.getElementById(runtimePageId)?.classList.remove("is-open");
         }
@@ -863,10 +864,10 @@
             #${managerId} .css-pn9hyf{font-size:1rem;line-height:1.5rem;font-weight:600;color:#f3f3f3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0}
             #${managerId} .uh-plugin-version{font-weight:400;color:#bdbdbd}
             #${managerId} .css-c5zcjf{font-size:.875rem;line-height:1.25rem;font-weight:400;color:#bdbdbd;letter-spacing:0}
-            #${managerId} .MuiChip-root{display:inline-flex;align-items:center;justify-content:center;height:24px;border-radius:12px;font-size:.75rem;line-height:1rem;font-weight:600;box-sizing:border-box}
+            #${managerId} .MuiChip-root{display:inline-flex;align-items:center;justify-content:center;height:24px;border-radius:6px;font-size:.75rem;line-height:1rem;font-weight:600;box-sizing:border-box}
             #${managerId} .MuiChip-label{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
             #${managerId} .css-8qn7l6{background:#303030;color:#d8d8d8}
-            #${managerId} .css-qyheyu{background:rgba(229,72,77,.12);color:#ffb3b5;border:1px solid rgba(229,72,77,.45);gap:4px}
+            #${managerId} .css-qyheyu{background:light-dark(#ffd6d9,rgba(229,72,77,.12));color:light-dark(#5b1f23,#ffb3b5);border:0;border-radius:6px;gap:4px}
             #${managerId} .css-qyheyu .MuiChip-icon{width:16px;height:16px;margin-left:6px;margin-right:-3px}
             #${managerId} .css-p018ps,#${managerId} .css-1dqmy24{border:1px solid #4a4a4a;color:#cfcfcf;background:transparent}
             #${managerId} .MuiButtonBase-root{font:inherit;letter-spacing:0}
@@ -1227,6 +1228,14 @@
           }, 120);
         }
 
+        function dismissManageMenu() {
+          window.clearTimeout(manageCloseTimer);
+          openManageFor = "";
+          closingManageFor = "";
+          manageOpenedByCursor = false;
+          document.getElementById("manage-menu")?.remove();
+        }
+
         function closeUninstallDialog() {
           if (!pendingUninstallId) return;
           window.clearTimeout(dialogCloseTimer);
@@ -1471,6 +1480,7 @@
           syncPluginTheme();
           observeLayoutTargets();
           const page = ensurePage();
+          dismissManageMenu();
           document.getElementById(runtimePageId)?.classList.remove("is-open");
           page.classList.add("is-open");
           setPluginNavActive(true);
@@ -1484,6 +1494,9 @@
         function syncPluginRoute() {
           if (location.hash === "#plugins") {
             void showManager();
+          } else if (document.getElementById(managerId)?.classList.contains("is-open")) {
+            closeAllUnifyHubPages();
+            setPluginNavActive(false);
           }
         }
 
