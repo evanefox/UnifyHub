@@ -18,6 +18,24 @@ function clampProgress(value) {
 	return Math.max(0, Math.min(1, number));
 }
 
+function taskbarProgressLog(eventName, payload) {
+	try {
+		if (typeof globalThis.__unifyHubLog === "function") globalThis.__unifyHubLog("taskbar-progress", eventName, payload);
+	} catch {}
+}
+
+function itemForProgressLog(item) {
+	if (!item || typeof item !== "object") return item;
+	return {
+		state: item.state,
+		status: item.status,
+		type: item.type || item.metadata?.type,
+		name: item.name || item.itemName || item.metadata?.itemName,
+		version: item.version || item.metadata?.version,
+		progress: progressFromItem(item)
+	};
+}
+
 function progressFromItem(item) {
 	const progress = item?.progress;
 	const direct = clampProgress(
@@ -48,19 +66,26 @@ function summarizeDownloadProgress(data) {
 	const failedItems = inactiveItems.filter((item) => /failed|error/i.test(String(item?.state || item?.status || "")));
 	if (failedItems.length > 0 && activeItems.length === 0 && queuedItems.length === 0) {
 		const failedProgress = progressFromItem(failedItems[0]);
-		return { value: failedProgress ?? 1, mode: "error" };
+		const summary = { value: failedProgress ?? 1, mode: "error" };
+		taskbarProgressLog("download-summary", { source: "broadcast", reason: "failed", counts: { active: activeItems.length, queued: queuedItems.length, inactive: inactiveItems.length }, failed: failedItems.slice(0, 5).map(itemForProgressLog), summary });
+		return summary;
 	}
 	const pausedItems = inactiveItems.filter((item) => /paused/i.test(String(item?.state || item?.status || "")));
 	if (activeItems.length === 0 && queuedItems.length === 0 && pausedItems.length > 0) {
-		const pausedProgress = averageProgress(pausedItems);
-		return { value: pausedProgress ?? 1, mode: "paused" };
+		const selected = preferTopLevelDownloadItems(pausedItems);
+		const pausedProgress = averageProgress(selected);
+		const summary = { value: pausedProgress ?? 1, mode: "paused" };
+		taskbarProgressLog("download-summary", { source: "broadcast", reason: "paused", counts: { active: activeItems.length, queued: queuedItems.length, inactive: inactiveItems.length }, selected: selected.slice(0, 5).map(itemForProgressLog), summary });
+		return summary;
 	}
 	if (activeItems.length === 0 && queuedItems.length === 0) return { value: -1, mode: "none" };
-	const progressItems = activeItems.length > 0 ? activeItems : queuedItems;
+	const progressItems = preferTopLevelDownloadItems(activeItems.length > 0 ? activeItems : queuedItems);
 	const average = averageProgress(progressItems);
 	if (average === null) return { value: 2, mode: "indeterminate" };
 	const hasPaused = activeItems.some((item) => /paused/i.test(String(item?.state || item?.status || "")));
-	return { value: average, mode: hasPaused ? "paused" : "normal" };
+	const summary = { value: average, mode: hasPaused ? "paused" : "normal" };
+	taskbarProgressLog("download-summary", { source: "broadcast", reason: activeItems.length > 0 ? "active" : "queued", counts: { active: activeItems.length, queued: queuedItems.length, inactive: inactiveItems.length }, selected: progressItems.slice(0, 8).map(itemForProgressLog), summary });
+	return summary;
 }
 
 function summarizeInstallationProgress(data) {
@@ -69,8 +94,16 @@ function summarizeInstallationProgress(data) {
 	const installationBacklog = toArray(data.installationBacklog);
 	const inactiveInstallations = toArray(data.inactiveInstallations);
 	const failedInstallations = inactiveInstallations.filter((item) => /failed|error/i.test(String(item?.state || item?.status || "")));
-	if (failedInstallations.length > 0 && activeInstallations.length === 0 && installationBacklog.length === 0) return { value: 1, mode: "error" };
-	if (activeInstallations.length > 0 || installationBacklog.length > 0) return { value: 2, mode: "indeterminate" };
+	if (failedInstallations.length > 0 && activeInstallations.length === 0 && installationBacklog.length === 0) {
+		const summary = { value: 1, mode: "error" };
+		taskbarProgressLog("installation-summary", { reason: "failed", counts: { active: activeInstallations.length, backlog: installationBacklog.length, inactive: inactiveInstallations.length }, summary });
+		return summary;
+	}
+	if (activeInstallations.length > 0 || installationBacklog.length > 0) {
+		const summary = { value: 2, mode: "indeterminate" };
+		taskbarProgressLog("installation-summary", { reason: activeInstallations.length > 0 ? "active" : "backlog", counts: { active: activeInstallations.length, backlog: installationBacklog.length, inactive: inactiveInstallations.length }, summary });
+		return summary;
+	}
 	const finishedInstallations = inactiveInstallations.filter((item) => /finished|success/i.test(String(item?.state || item?.status || "")));
 	if (finishedInstallations.length > 0) return { value: -1, mode: "none" };
 	return null;
@@ -82,18 +115,57 @@ function averageProgress(items) {
 	return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-function summarizeHubUpdateProgress(eventName, content) {
-	if (eventName === "auto-update.download-failed") return { value: 1, mode: "error" };
-	if (eventName === "auto-update.download-complete") return { value: -1, mode: "none" };
-	if (eventName !== "auto-update.download-progress") return null;
-	const update = content?.[0] || {};
-	return { value: clampProgress(update.percent) ?? 2, mode: clampProgress(update.percent) === null ? "indeterminate" : "normal" };
+function preferTopLevelDownloadItems(items) {
+	const withProgress = toArray(items).filter((item) => progressFromItem(item) !== null);
+	if (!withProgress.length) return toArray(items);
+	const topLevelEditors = withProgress.filter((item) => /^editor$/i.test(String(item?.metadata?.type || item?.type || "")));
+	if (topLevelEditors.length) return topLevelEditors;
+	const nonQueued = withProgress.filter((item) => !/queued/i.test(String(item?.state || item?.status || "")));
+	return nonQueued.length ? nonQueued : withProgress;
 }
 
-function setTaskbarProgress(summary) {
+function summarizeHubUpdateProgress(eventName, content) {
+	if (eventName === "auto-update.download-failed") {
+		const summary = { value: 1, mode: "error" };
+		taskbarProgressLog("hub-update-summary", { eventName, summary });
+		return summary;
+	}
+	if (eventName === "auto-update.download-complete") {
+		const summary = { value: -1, mode: "none" };
+		taskbarProgressLog("hub-update-summary", { eventName, summary });
+		return summary;
+	}
+	if (eventName !== "auto-update.download-progress") return null;
+	const update = content?.[0] || {};
+	const value = clampProgress(update.percent);
+	const summary = { value: value ?? 2, mode: value === null ? "indeterminate" : "normal" };
+	taskbarProgressLog("hub-update-summary", { eventName, percent: update.percent, summary });
+	return summary;
+}
+
+function setTaskbarProgress(summary, source = "broadcast") {
+	if (!summary) return;
 	const state = globalThis.__unifyHubTaskbarProgressState || {};
-	if (state.value === summary.value && state.mode === summary.mode && Date.now() - (state.updatedAt || 0) < 250) return;
-	globalThis.__unifyHubTaskbarProgressState = { ...summary, updatedAt: Date.now() };
+	const now = Date.now();
+	if (source === "broadcast-installation" && summary.mode === "indeterminate" && ["paused", "normal", "error"].includes(state.mode) && now - (state.lastDownloadAt || 0) < 15000) {
+		taskbarProgressLog("set-suppressed", { source, reason: "download-priority", previous: { value: state.value, mode: state.mode, source: state.source }, summary });
+		return;
+	}
+	if ((summary.mode === "none" || summary.value < 0) && state.mode && state.mode !== "none" && now - (state.lastNonNoneAt || state.updatedAt || 0) < 2500) {
+		taskbarProgressLog("set-suppressed", { source, reason: "recent-active", previous: { value: state.value, mode: state.mode, source: state.source }, summary });
+		return;
+	}
+	if (state.value === summary.value && state.mode === summary.mode && now - (state.updatedAt || 0) < 250) return;
+	globalThis.__unifyHubTaskbarProgressState = {
+		...summary,
+		liveItems: state.liveItems,
+		source,
+		updatedAt: now,
+		lastBroadcastAt: source.startsWith("broadcast") ? now : state.lastBroadcastAt,
+		lastDownloadAt: source.includes("download") ? now : state.lastDownloadAt,
+		lastNonNoneAt: summary.mode === "none" || summary.value < 0 ? state.lastNonNoneAt : now
+	};
+	taskbarProgressLog("set-progress", { source, summary });
 	for (const window of BrowserWindow.getAllWindows()) {
 		if (!window || window.isDestroyed()) continue;
 		try {
@@ -107,15 +179,15 @@ function updateUnifyHubTaskbarProgress(eventName, ...content) {
 	if (process.platform !== "win32") return;
 	const hubUpdateSummary = summarizeHubUpdateProgress(eventName, content);
 	if (hubUpdateSummary) {
-		setTaskbarProgress(hubUpdateSummary);
+		setTaskbarProgress(hubUpdateSummary, "broadcast-update");
 		return;
 	}
 	if (eventName === "installation-updates") {
 		const installSummary = summarizeInstallationProgress(content?.[0]);
-		if (installSummary) setTaskbarProgress(installSummary);
+		if (installSummary) setTaskbarProgress(installSummary, "broadcast-installation");
 		return;
 	}
 	if (eventName === "download-updates") {
-		setTaskbarProgress(summarizeDownloadProgress(content?.[0]));
+		setTaskbarProgress(summarizeDownloadProgress(content?.[0]), "broadcast-download");
 	}
 }

@@ -5,6 +5,7 @@
 	deletePlugin: (pluginId) => ipcRenderer.invoke("unifyhub:delete-plugin", pluginId),
 	installPlugin: () => ipcRenderer.invoke("unifyhub:install-plugin"),
 	openPluginFolder: (pluginId) => ipcRenderer.invoke("unifyhub:open-plugin-folder", pluginId),
+	openLogFolder: () => ipcRenderer.invoke("unifyhub:open-log-folder"),
 	listRendererRuntimePlugins: () => ipcRenderer.invoke("unifyhub:list-renderer-runtime-plugins"),
 	getPluginConfig: (pluginId) => ipcRenderer.invoke("unifyhub:get-plugin-config", pluginId),
 	setPluginConfigValue: (pluginId, key, value) => ipcRenderer.invoke("unifyhub:set-plugin-config-value", pluginId, key, value),

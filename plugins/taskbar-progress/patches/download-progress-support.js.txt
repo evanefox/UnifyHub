@@ -11,11 +11,90 @@ function clampUnifyHubTaskbarProgress(value) {
 	return Math.max(0, Math.min(1, number));
 }
 
-function setUnifyHubTaskbarProgress(summary) {
+function taskbarProgressLog(eventName, payload) {
+	try {
+		if (typeof globalThis.__unifyHubLog === "function") globalThis.__unifyHubLog("taskbar-progress", eventName, payload);
+	} catch {}
+}
+
+function liveItemForProgressLog(item) {
+	if (!item || typeof item !== "object") return item;
+	return {
+		state: item.state,
+		status: item.status,
+		type: item.type || item.metadata?.type,
+		name: item.name || item.itemName || item.metadata?.itemName,
+		version: item.version || item.metadata?.version,
+		progress: item.__uhProgress
+	};
+}
+
+function getUnifyHubDownloadKey(update) {
+	const metadata = update?.metadata || {};
+	const direct = (
+		update?.id ||
+		update?.key ||
+		update?.itemId ||
+		metadata.id ||
+		metadata.itemId ||
+		metadata.productId
+	);
+	if (direct) return String(direct);
+	return `${metadata.type || update?.type || "download"}:${metadata.itemName || update?.name || ""}:${metadata.version || ""}:${metadata.moduleId || metadata.destination || ""}`;
+}
+
+function preferUnifyHubTopLevelDownloads(items) {
+	const withProgress = items.filter((item) => item.__uhProgress !== null);
+	if (!withProgress.length) return items;
+	const topLevelEditors = withProgress.filter((item) => /^editor$/i.test(String(item?.metadata?.type || item?.type || "")));
+	if (topLevelEditors.length) return topLevelEditors;
+	const nonQueued = withProgress.filter((item) => !/queued/i.test(String(item?.state || item?.status || "")));
+	return nonQueued.length ? nonQueued : withProgress;
+}
+
+function averageUnifyHubLiveProgress(items) {
+	const values = preferUnifyHubTopLevelDownloads(items).map((item) => item.__uhProgress).filter((value) => value !== null);
+	if (!values.length) return null;
+	return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function summarizeUnifyHubLiveDownloads(items) {
+	const now = Date.now();
+	const recent = items.filter((item) => now - (item.__uhUpdatedAt || 0) < 20000);
+	const failed = recent.filter((item) => /failed|error/i.test(String(item?.state || item?.status || "")));
+	if (failed.length) return { value: averageUnifyHubLiveProgress(failed) ?? 1, mode: "error" };
+	const paused = recent.filter((item) => /paused/i.test(String(item?.state || item?.status || "")));
+	if (paused.length) return { value: averageUnifyHubLiveProgress(paused) ?? 1, mode: "paused" };
+	const downloading = recent.filter((item) => /downloading/i.test(String(item?.state || item?.status || "")) || (item.__uhProgress !== null && !/paused|finished|success|cleanup|queued/i.test(String(item?.state || item?.status || ""))));
+	if (downloading.length) return { value: averageUnifyHubLiveProgress(downloading) ?? 2, mode: "normal" };
+	const installing = recent.filter((item) => /finished|success/i.test(String(item?.state || item?.status || "")) && /^(editor|editorModule)$/i.test(String(item?.metadata?.type || item?.type || "")));
+	if (installing.length) return { value: 2, mode: "indeterminate" };
+	return { value: -1, mode: "none" };
+}
+
+function setUnifyHubTaskbarProgress(summary, source = "live") {
 	if (process.platform !== "win32" || !summary) return;
 	const state = globalThis.__unifyHubTaskbarProgressState || {};
-	if (state.value === summary.value && state.mode === summary.mode && Date.now() - (state.updatedAt || 0) < 120) return;
-	globalThis.__unifyHubTaskbarProgressState = { ...summary, updatedAt: Date.now() };
+	const now = Date.now();
+	if (source === "live" && state.lastBroadcastAt && now - state.lastBroadcastAt < 1800) {
+		taskbarProgressLog("set-suppressed", { source, reason: "fresh-broadcast", previous: { value: state.value, mode: state.mode, source: state.source }, summary });
+		return;
+	}
+	if ((summary.mode === "none" || summary.value < 0) && state.mode && state.mode !== "none" && now - (state.lastNonNoneAt || state.updatedAt || 0) < 2500) {
+		taskbarProgressLog("set-suppressed", { source, reason: "recent-active", previous: { value: state.value, mode: state.mode, source: state.source }, summary });
+		return;
+	}
+	if (state.value === summary.value && state.mode === summary.mode && now - (state.updatedAt || 0) < 250) return;
+	globalThis.__unifyHubTaskbarProgressState = {
+		...summary,
+		liveItems: state.liveItems,
+		source,
+		updatedAt: now,
+		lastBroadcastAt: state.lastBroadcastAt,
+		lastDownloadAt: now,
+		lastNonNoneAt: summary.mode === "none" || summary.value < 0 ? state.lastNonNoneAt : now
+	};
+	taskbarProgressLog("set-progress", { source, summary });
 	for (const window of BrowserWindow.getAllWindows()) {
 		if (!window || window.isDestroyed()) continue;
 		try {
@@ -34,30 +113,20 @@ function updateUnifyHubTaskbarProgressFromDownload(update) {
 		update.percent ??
 		update.percentage
 	);
-	if (/failed|error/i.test(state)) {
-		setUnifyHubTaskbarProgress({ value: value ?? 1, mode: "error" });
-		return;
+	const taskbarState = globalThis.__unifyHubTaskbarProgressState || {};
+	const liveItems = taskbarState.liveItems && typeof taskbarState.liveItems === "object" ? taskbarState.liveItems : {};
+	const now = Date.now();
+	for (const [key, item] of Object.entries(liveItems)) {
+		if (now - (item.__uhUpdatedAt || 0) > 20000 || (/cleanup/i.test(String(item?.state || item?.status || "")) && now - (item.__uhUpdatedAt || 0) > 2500)) delete liveItems[key];
 	}
-	if (/paused/i.test(state)) {
-		setUnifyHubTaskbarProgress({ value: value ?? 1, mode: "paused" });
-		return;
-	}
-	if (/finished|success/i.test(state)) {
-		const type = String(update?.metadata?.type || "");
-		if (/^(editor|editorModule)$/i.test(type)) {
-			setUnifyHubTaskbarProgress({ value: 2, mode: "indeterminate" });
-			return;
-		}
-		setUnifyHubTaskbarProgress({ value: -1, mode: "none" });
-		return;
-	}
-	if (/cleanup/i.test(state)) {
-		setUnifyHubTaskbarProgress({ value: -1, mode: "none" });
-		return;
-	}
-	if (/downloading/i.test(state) || value !== null) {
-		setUnifyHubTaskbarProgress({ value: value ?? 2, mode: value === null ? "indeterminate" : "normal" });
-	}
+	const key = getUnifyHubDownloadKey(update);
+	if (/cleanup/i.test(state)) delete liveItems[key];
+	else liveItems[key] = { ...update, __uhProgress: value, __uhUpdatedAt: now };
+	globalThis.__unifyHubTaskbarProgressState = { ...taskbarState, liveItems };
+	const items = Object.values(liveItems);
+	const summary = summarizeUnifyHubLiveDownloads(items);
+	taskbarProgressLog("download-live-summary", { key, incoming: liveItemForProgressLog(liveItems[key] || update), items: items.slice(0, 12).map(liveItemForProgressLog), summary });
+	setUnifyHubTaskbarProgress(summary, "live");
 }
 
 var STATE_CHANGE_HANDLER_SUPPRESSING_STATES = [

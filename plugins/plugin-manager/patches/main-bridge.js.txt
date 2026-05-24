@@ -3,6 +3,7 @@
 			if (globalThis.__unifyHubBridgeInstalled) return;
 			globalThis.__unifyHubBridgeInstalled = true;
 			const __uhCorePlugins = new Set(["plugin-manager"]);
+			const __uhReservedPluginIds = new Set([...__uhCorePlugins]);
 			const __uhDefaultEnabledPlugins = new Set(["plugin-manager"]);
 			const __uhBundledProjectRoot = __UNIFYHUB_PROJECT_ROOT_JSON__;
 			const __uhBundledTarget = __UNIFYHUB_TARGET_ID_JSON__;
@@ -37,6 +38,34 @@
 			const __uhPluginsDir = path.join(__uhDataDir, "plugins");
 			const __uhStatePath = path.join(__uhDataDir, "state.json");
 			const __uhLegacyStatePath = path.join(__uhRoot, "state", `${__uhTarget}.json`);
+			const __uhLogDir = path.join(__uhDataDir, "logs");
+			function __uhSafeLogId(value) {
+				return String(value || "plugin").replace(/[^a-z0-9._-]+/gi, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "plugin";
+			}
+			function __uhLog(pluginId, eventName, payload) {
+				try {
+					fs.mkdirSync(__uhLogDir, { recursive: true });
+					const line = JSON.stringify({ time: new Date().toISOString(), plugin: String(pluginId || "core"), event: String(eventName || "log"), payload }) + "\n";
+					fs.appendFileSync(path.join(__uhLogDir, `${__uhSafeLogId(pluginId)}.log`), line, "utf8");
+				} catch {}
+			}
+			globalThis.__unifyHubLog = __uhLog;
+			function __uhInstallErrorCategory(message) {
+				const text = String(message || "").toLowerCase();
+				if (text.includes("cannot declare core") || text.includes("reserved by unifyhub") || text.includes("reserved by a bundled")) return "Unauthorized access";
+				if (text.includes("does not contain a plugin.json") || text.includes("invalid plugin id")) return "Invalid plugin";
+				if (text.includes("already exists")) return "Already installed";
+				if (text.includes("eperm") || text.includes("eacces") || text.includes("permission") || text.includes("access is denied")) return "File access blocked";
+				return "Install failed";
+			}
+			function __uhPluginInstallError(message, details = {}) {
+				const category = __uhInstallErrorCategory(message);
+				__uhLog("plugin-manager", "install-failed", { category, message: String(message || "Install failed."), ...details });
+				const error = new Error(message);
+				error.category = category;
+				error.logPath = path.join(__uhLogDir, "plugin-manager.log");
+				throw error;
+			}
 			function __uhReadJson(filePath, fallback) {
 				try { return JSON.parse(fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/, "")); }
 				catch { return fallback; }
@@ -87,7 +116,17 @@
 				if (!manifest || !manifest.id) return null;
 				if (!__uhPluginIdPattern.test(manifest.id)) return null;
 				const bundled = source === "bundled";
-				return { ...manifest, pluginDir, manifestPath, bundled, source, core: Boolean(manifest.core || __uhCorePlugins.has(manifest.id)) };
+				const core = bundled && __uhCorePlugins.has(manifest.id);
+				return {
+					...manifest,
+					pluginDir,
+					manifestPath,
+					bundled,
+					source,
+					core,
+					uninstallable: source === "user" && !__uhReservedPluginIds.has(manifest.id),
+					disableable: !core
+				};
 			}
 			function __uhListPlugins() {
 				fs.mkdirSync(__uhPluginsDir, { recursive: true });
@@ -113,6 +152,8 @@
 						core: plugin.core,
 						bundled: plugin.bundled,
 						source: plugin.source,
+						uninstallable: plugin.uninstallable,
+						disableable: plugin.disableable,
 						enabled: plugin.core ? true : state.disabledByUser?.[plugin.id] === true ? false : (__uhDefaultEnabledPlugins.has(plugin.id) || Boolean(state.enabled[plugin.id])),
 						path: plugin.pluginDir
 					}));
@@ -185,9 +226,9 @@
 						},
 						set: (key, value) => __uhSetPluginConfigValue(plugin.id, key, value)
 					}),
-					log: (...args) => console.log(logPrefix, ...args),
-					warn: (...args) => console.warn(logPrefix, ...args),
-					error: (...args) => console.error(logPrefix, ...args),
+					log: (...args) => { console.log(logPrefix, ...args); __uhLog(plugin.id, "log", args); },
+					warn: (...args) => { console.warn(logPrefix, ...args); __uhLog(plugin.id, "warn", args); },
+					error: (...args) => { console.error(logPrefix, ...args); __uhLog(plugin.id, "error", args); },
 					window: Object.freeze({
 						all: () => BrowserWindow.getAllWindows().filter((window) => !window.isDestroyed?.()),
 						focused: () => BrowserWindow.getFocusedWindow(),
@@ -361,18 +402,27 @@ if (result.status === 0) {
 				if (result.canceled || !result.filePaths?.[0]) return { canceled: true, ...__uhListPlugins() };
 				const sourceDir = result.filePaths[0];
 				const sourceManifest = __uhReadJson(path.join(sourceDir, "plugin.json"), null);
-				if (!sourceManifest?.id) throw new Error("Selected folder does not contain a plugin.json with an id.");
-				if (!__uhPluginIdPattern.test(sourceManifest.id)) throw new Error(`Invalid plugin id: ${sourceManifest.id}`);
+				if (!sourceManifest?.id) __uhPluginInstallError("Selected folder does not contain a plugin.json with an id.", { sourceDir });
+				if (!__uhPluginIdPattern.test(sourceManifest.id)) __uhPluginInstallError(`Invalid plugin id: ${sourceManifest.id}`, { sourceDir, pluginId: sourceManifest.id });
 				const destination = path.join(__uhPluginsDir, sourceManifest.id);
-				if (__uhPluginManifest(sourceManifest.id, "bundled")) throw new Error(`Plugin id is reserved by a bundled UnifyHub plugin: ${sourceManifest.id}`);
-				if (fs.existsSync(destination)) throw new Error(`Plugin already exists: ${sourceManifest.id}`);
-				fs.cpSync(sourceDir, destination, { recursive: true });
-				const state = __uhReadState();
-				state.enabled[sourceManifest.id] = true;
-				state.disabledByUser ||= {};
-				delete state.disabledByUser[sourceManifest.id];
-				__uhWriteJson(__uhStatePath, state);
-				return { canceled: false, ...__uhListPlugins() };
+				if (__uhReservedPluginIds.has(sourceManifest.id)) __uhPluginInstallError(`Plugin id is reserved by UnifyHub: ${sourceManifest.id}`, { sourceDir, pluginId: sourceManifest.id });
+				if (__uhPluginManifest(sourceManifest.id, "bundled")) __uhPluginInstallError(`Plugin id is reserved by a bundled UnifyHub plugin: ${sourceManifest.id}`, { sourceDir, pluginId: sourceManifest.id });
+				if (fs.existsSync(destination)) __uhPluginInstallError(`Plugin already exists: ${sourceManifest.id}`, { sourceDir, pluginId: sourceManifest.id, destination });
+				if (sourceManifest.core === true || sourceManifest.bundled === true || sourceManifest.protected === true || sourceManifest.uninstallable === false || sourceManifest.disableable === false) {
+					__uhPluginInstallError("User plugins cannot declare core, bundled, protected, uninstallable, or disableable privileges.", { sourceDir, pluginId: sourceManifest.id });
+				}
+				try {
+					fs.cpSync(sourceDir, destination, { recursive: true });
+					const state = __uhReadState();
+					state.enabled[sourceManifest.id] = true;
+					state.disabledByUser ||= {};
+					delete state.disabledByUser[sourceManifest.id];
+					__uhWriteJson(__uhStatePath, state);
+					__uhLog("plugin-manager", "install-complete", { pluginId: sourceManifest.id, sourceDir, destination });
+					return { canceled: false, ...__uhListPlugins() };
+				} catch (error) {
+					__uhPluginInstallError(error?.message || String(error), { sourceDir, pluginId: sourceManifest.id, destination });
+				}
 			});
 			__uhHandle("unifyhub:open-plugin-folder", (_event, pluginId) => {
 				const manifest = __uhPluginManifest(pluginId, "bundled") || __uhPluginManifest(pluginId, "user");
@@ -381,6 +431,12 @@ if (result.status === 0) {
 				const child = spawn("explorer.exe", [manifest.pluginDir], { detached: true, stdio: "ignore" });
 				child.unref();
 				return { ok: true, path: manifest.pluginDir };
+			});
+			__uhHandle("unifyhub:open-log-folder", () => {
+				fs.mkdirSync(__uhLogDir, { recursive: true });
+				const child = spawn("explorer.exe", [__uhLogDir], { detached: true, stdio: "ignore" });
+				child.unref();
+				return { ok: true, path: __uhLogDir };
 			});
 			__uhHandle("unifyhub:apply-plugins", async () => {
 				const enabled = __uhEnabledPluginIds();

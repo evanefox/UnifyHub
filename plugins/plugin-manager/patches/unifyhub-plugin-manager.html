@@ -1,4 +1,4 @@
-﻿    <!--
+    <!--
       UnifyHub Plugin Manager injected page
 
       Source location:
@@ -24,12 +24,15 @@
         const trashIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>';
         const plugIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M224,136H200V104a32,32,0,0,0-32-32H136V48a8,8,0,0,0-16,0V72H88V48a8,8,0,0,0-16,0V72H48a8,8,0,0,0,0,16H72v32H48a8,8,0,0,0,0,16H72v32H48a8,8,0,0,0,0,16H72v24a8,8,0,0,0,16,0V184h32v24a8,8,0,0,0,16,0V184h32a32,32,0,0,0,32-32V120h24a8,8,0,0,0,0-16H200V88h24a8,8,0,0,0,0-16H200V48a8,8,0,0,0-16,0V72h-8.23A47.93,47.93,0,0,1,200,112v24h24a8,8,0,0,1,0,16ZM88,88h80a16,16,0,0,1,16,16v48a16,16,0,0,1-16,16H88Z"/></svg>';
         const searchIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path></svg>';
-        const emptyIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="none" viewBox="0 0 56 56"><path d="M28 6 47 17v22L28 50 9 39V17L28 6Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M10.5 18.5 28 28.5 45.5 18.5M28 28.5V49" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        const emptyIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256" style="color:rgb(123,123,123);font-size:48px"><path d="M216,120v96l-29.33-24-29.34,24L128,192,98.67,216,69.33,192,40,216V120a88,88,0,0,1,176,0Z" opacity="0.2"></path><path d="M112,116a12,12,0,1,1-12-12A12,12,0,0,1,112,116Zm44-12a12,12,0,1,0,12,12A12,12,0,0,0,156,104Zm68,16v96a8,8,0,0,1-13.07,6.19l-24.26-19.85L162.4,222.19a8,8,0,0,1-10.13,0L128,202.34l-24.27,19.85a8,8,0,0,1-10.13,0L69.33,202.34,45.07,222.19A8,8,0,0,1,32,216V120a96,96,0,0,1,192,0Zm-16,0a80,80,0,0,0-160,0v79.12l16.27-13.31a8,8,0,0,1,10.13,0l24.27,19.85,24.26-19.85a8,8,0,0,1,10.14,0l24.26,19.85,24.27-19.85a8,8,0,0,1,10.13,0L208,199.12Z"></path></svg>';
+        const installPluginIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256"><path d="M240,136v64a16,16,0,0,1-16,16H32a16,16,0,0,1-16-16V136a16,16,0,0,1,16-16H72a8,8,0,0,1,0,16H32v64H224V136H184a8,8,0,0,1,0-16h40A16,16,0,0,1,240,136Zm-117.66-2.34a8,8,0,0,0,11.32,0l48-48a8,8,0,0,0-11.32-11.32L136,108.69V24a8,8,0,0,0-16,0v84.69L85.66,74.34A8,8,0,0,0,74.34,85.66ZM200,168a12,12,0,1,0-12,12A12,12,0,0,0,200,168Z"></path></svg>';
         const clearIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,130.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>';
         const warningIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="#e5484d" viewBox="0 0 256 256" class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColor#e5484d"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"></path></svg>';
         let state = { root: "", target: "dummy", plugins: [] };
         let statusText = "";
         let searchText = "";
+        let isRefreshing = false;
+        let pluginsLoaded = false;
         let openManageFor = "";
         let closingManageFor = "";
         let manageOpenedByCursor = false;
@@ -42,6 +45,7 @@
         let applyDialogOpen = false;
         let applyDialogError = "";
         let applyDialogBusy = false;
+        let installErrorInfo = null;
         const appliedConfigBaseline = new Map();
         const navTooltipId = `${navId}-tooltip`;
         let navTooltipCloseTimer = 0;
@@ -49,9 +53,14 @@
         let navTooltipAnchor = null;
         let runtimePluginsLoaded = false;
         const runtimePages = new Map();
+        const minRefreshLoadingMs = 220;
 
         function bridge() {
           return window.unifyHub || window.api?.unifyHub;
+        }
+
+        function delay(ms) {
+          return new Promise((resolve) => window.setTimeout(resolve, ms));
         }
 
         function installStartupOverflowGuard() {
@@ -107,13 +116,20 @@
         }
 
         function nativeSideNavCollapsed() {
+          const nativeLabel = [...document.querySelectorAll(".cloudui-side-nav-row .css-gbx5td")]
+            .find((label) => !label.closest(`#${navId}`) && !label.closest(".uh-runtime-nav") && label.getBoundingClientRect().height > 0);
+          if (nativeLabel) {
+            const style = getComputedStyle(nativeLabel);
+            const rect = nativeLabel.getBoundingClientRect();
+            const opacity = Number.parseFloat(style.opacity || "1");
+            return rect.width < 8 || style.display === "none" || style.visibility === "hidden" || opacity < 0.5;
+          }
           const rect = nativeSideNavRect();
           return !rect || rect.width < 100 || sideRight() < 100;
         }
 
-        function syncPluginNavCollapseState() {
+        function setInjectedNavCollapsed(collapsed) {
           const nav = document.getElementById(navId);
-          const collapsed = nativeSideNavCollapsed();
           if (nav) {
             nav.classList.toggle("uh-nav-collapsed", collapsed);
             nav.classList.toggle("uh-nav-expanded", !collapsed);
@@ -122,6 +138,10 @@
             runtimeNav.classList.toggle("uh-nav-collapsed", collapsed);
             runtimeNav.classList.toggle("uh-nav-expanded", !collapsed);
           });
+        }
+
+        function syncPluginNavCollapseState() {
+          setInjectedNavCollapsed(nativeSideNavCollapsed());
         }
 
         function setPluginNavActive(active) {
@@ -590,6 +610,10 @@
           return JSON.stringify(configValues(plugin));
         }
 
+        function configSignatureFromValues(plugin, values) {
+          return JSON.stringify(Object.fromEntries((plugin.config || []).map((option) => [option.key, Boolean(values?.[option.key])])));
+        }
+
         function rememberAppliedConfigBaseline(force = false) {
           (state.plugins || []).forEach((plugin) => {
             if ((plugin.config || []).length && (force || !appliedConfigBaseline.has(plugin.id))) {
@@ -606,8 +630,8 @@
 
         function pluginToggle(plugin) {
           const checked = plugin.enabled ? " checked" : "";
-          const disabled = plugin.core ? " disabled" : "";
-          return `<label class="uh-toggle" title="${plugin.core ? "Built-in plugin" : "Enable plugin"}"><input type="checkbox" data-action="toggle:${plugin.id}"${checked}${disabled}><span></span></label>`;
+          const disabled = plugin.disableable === false ? " disabled" : "";
+          return `<label class="uh-toggle" title="${plugin.disableable === false ? "Protected plugin" : "Enable plugin"}"><input type="checkbox" data-action="toggle:${plugin.id}"${checked}${disabled}><span></span></label>`;
         }
 
         function pluginCard(plugin) {
@@ -646,8 +670,16 @@
         }
 
         function emptyState(hasSearch) {
-          if (!hasSearch) return '<div class="uh-empty">No plugins found.</div>';
-          return `<div class="uh-empty-search"><div class="uh-empty-icon" aria-hidden="true">${emptyIcon}</div><h2>No plugins found</h2><p>Try adjusting your search term or clearing your current search to see all plugins.</p><button class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary css-19gz6c3" type="button" data-action="clear-search">Clear search</button></div>`;
+          const action = hasSearch
+            ? `<button class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary css-1efuv37" tabindex="0" type="button" data-testid="state-card-button" data-action="clear-search">Clear search</button>`
+            : `<button class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedPrimary MuiButton-sizeSmall MuiButton-outlinedSizeSmall MuiButton-colorPrimary css-1efuv37" tabindex="0" type="button" data-testid="state-card-button" data-action="install"><span class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeSmall css-wks9i5">${installPluginIcon}</span>Install plugin</button>`;
+          const title = hasSearch ? "No plugins found" : "No plugins";
+          const description = hasSearch ? "Try adjusting your search term or clearing your current search to see all plugins." : "To get started, install or create a UnifyHub plugin.";
+          return `<div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation0 MuiCard-root css-jsvu1q uh-empty-state-card" data-testid="state-card" style="--Paper-shadow:none;--Paper-overlay:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,0));"><div class="MuiCardContent-root css-1m5zjfb"><div class="MuiBox-root css-19idom" data-testid="state-card-icon" aria-hidden="true">${emptyIcon}</div><p class="MuiTypography-root MuiTypography-h4 MuiTypography-alignCenter css-1to2m9q" data-testid="state-card-title" style="--Typography-textAlign:center;">${title}</p><p class="MuiTypography-root MuiTypography-body2 MuiTypography-alignCenter css-hxftz5" data-testid="state-card-description" style="--Typography-textAlign:center;">${description}</p><div class="MuiStack-root css-1mzerio">${action}</div></div></div>`;
+        }
+
+        function loadingState() {
+          return `<div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation0 MuiCard-root css-1n090k6 uh-loading-state-card" data-testid="state-card" style="--Paper-shadow:none;--Paper-overlay:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,0));"><div class="MuiCardContent-root css-1m5zjfb"><div class="MuiBox-root css-19idom" data-testid="state-card-icon"><span class="MuiCircularProgress-root MuiCircularProgress-indeterminate MuiCircularProgress-colorSecondary css-1mg8wnd" role="progressbar" style="width:30px;height:30px;"><svg class="MuiCircularProgress-svg css-4ejps8" viewBox="22 22 44 44"><circle class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate css-13odlrs" cx="44" cy="44" r="20.2" fill="none" stroke-width="3.6"></circle></svg></span></div><p class="MuiTypography-root MuiTypography-body2 MuiTypography-alignCenter css-hxftz5" data-testid="state-card-description" style="--Typography-textAlign:center;">Refreshing plugins...</p></div></div>`;
         }
 
         function menuItem({ label, icon, action, danger = false, disabled = false, disabledReason = "", tabIndex = -1 }) {
@@ -666,8 +698,8 @@
           const origin = manageMenuPosition.origin || "18px 0px";
           const maxHeight = Math.round(manageMenuPosition.maxHeight || 0);
           const maxHeightStyle = maxHeight ? ` max-height: ${maxHeight}px;` : "";
-          const uninstallDisabled = !!plugin.core || !!plugin.bundled;
-          const uninstallReason = plugin.core ? "Core plugins cannot be uninstalled from the UI." : plugin.bundled ? "Bundled plugins are managed by the UnifyHub install and cannot be uninstalled from the UI." : "";
+          const uninstallDisabled = plugin.uninstallable === false;
+          const uninstallReason = plugin.core ? "Core plugins cannot be uninstalled from the UI." : plugin.bundled ? "Bundled plugins are managed by the UnifyHub install and cannot be uninstalled from the UI." : "This plugin cannot be uninstalled from the UI.";
           return `<div role="presentation" id="manage-menu" class="MuiPopover-root MuiMenu-root MuiModal-root css-12m6313${isClosing ? " is-closing" : ""}"><div aria-hidden="true" class="MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-wj5uj5" data-action="close-manage" style="opacity: ${isClosing ? 0 : 1}; transition: opacity 120ms cubic-bezier(0.4, 0, 0.2, 1);"></div><div tabindex="0" data-testid="sentinelStart"></div><div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation8 MuiPopover-paper MuiMenu-paper css-cvm34e" tabindex="-1" style="--Paper-shadow: 0px 8px 16px rgb(0 0 0 / 10%), 0px 2px 4px rgb(0 0 0 / 0%); --Paper-overlay: linear-gradient(rgba(255, 255, 255, 0.119), rgba(255, 255, 255, 0.119)); opacity: ${isClosing ? 0 : 1}; transform: ${isClosing ? "scale(0.86)" : "scale(1)"}; transition: opacity 120ms cubic-bezier(0.4, 0, 0.2, 1), transform 120ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1); top: ${top}px; left: ${left}px; transform-origin: ${origin}; box-shadow: var(--Paper-shadow);${maxHeightStyle}"><ul class="MuiList-root MuiList-padding MuiList-dense MuiMenu-list css-ubifyk" role="menu" tabindex="-1" aria-labelledby="${labelledBy}">${menuItem({ label: "Config", icon: slidersIcon, action: `menu:config:${plugin.id}`, tabIndex: 0, disabled: !(plugin.config || []).length, disabledReason: "This plugin has no settings." })}${menuItem({ label: "Show in Explorer", icon: folderIcon, action: `menu:explorer:${plugin.id}` })}${menuItem({ label: "Reload", icon: reloadIcon, action: `menu:reload:${plugin.id}` })}<hr class="MuiDivider-root MuiDivider-fullWidth css-1a6ik6p">${menuItem({ label: "Uninstall", icon: trashIcon, action: `menu:uninstall:${plugin.id}`, disabled: uninstallDisabled, disabledReason: uninstallReason })}</ul></div><div tabindex="0" data-testid="sentinelEnd"></div></div>`;
         }
 
@@ -678,6 +710,55 @@
           const plugin = (state.plugins || []).find((item) => item.id === dialogId);
           const pluginName = escapeHtml(plugin?.name || dialogId);
           return `<div role="presentation" class="MuiDialog-root MuiModal-root css-1egf66k${isClosing ? " is-closing" : ""}"><div aria-hidden="true" class="MuiBackdrop-root MuiModal-backdrop css-1x7z3m2" data-action="dialog-cancel" style="opacity: ${isClosing ? 0 : 1}; transition: opacity 120ms cubic-bezier(0.4, 0, 0.2, 1);"></div><div tabindex="0" data-testid="sentinelStart"></div><div class="MuiDialog-container MuiDialog-scrollPaper css-fh1hs4" role="presentation" tabindex="-1" data-action="dialog-cancel" style="opacity: ${isClosing ? 0 : 1}; transition: opacity 120ms cubic-bezier(0.4, 0, 0.2, 1);"><div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation24 MuiDialog-paper MuiDialog-paperScrollPaper MuiDialog-paperWidthSm MuiDialog-paperFullWidth css-jws3r8" role="dialog" aria-labelledby="uh-dialog-title" aria-modal="true" style="--Paper-shadow: 0px 36px 32px rgba(0, 0, 0, 0.58); --Paper-overlay: linear-gradient(rgba(255, 255, 255, 0.165), rgba(255, 255, 255, 0.165));"><div class="MuiTypography-root MuiTypography-h6 MuiDialogTitle-root css-rrrssm" id="uh-dialog-title"><div class="MuiStack-root css-1ghls50"><div class="MuiStack-root css-18gwvlh"><h2 class="MuiTypography-root MuiTypography-h3 css-110xi6n">Uninstall Plugin</h2></div><button class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-1uvbf3" tabindex="0" type="button" data-action="dialog-cancel" aria-label="close">${closeIcon()}</button></div></div><div class="MuiDialogContent-root css-16m2lg5"><p class="MuiTypography-root MuiTypography-body1 MuiTypography-gutterBottom css-1il12si">Are you sure you want to uninstall ${pluginName}?</p><p class="MuiTypography-root MuiTypography-body1 css-wdm2sh">This action will remove the plugin folder from UnifyHub plugins.</p></div><div class="MuiDialogActions-root MuiDialogActions-spacing css-8dncs3"><button class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary css-19gz6c3" tabindex="0" type="button" data-action="dialog-cancel" style="height:32px;min-height:32px;padding:0 10px;line-height:20px;box-sizing:border-box;">Cancel</button><button class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedError MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorError MuiButton-root MuiButton-contained MuiButton-containedError MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorError css-e0rud8" tabindex="0" type="button" data-action="dialog-confirm" style="height:32px;min-height:32px;padding:0 10px;line-height:20px;box-sizing:border-box;">Uninstall</button></div></div></div><div tabindex="0" data-testid="sentinelEnd"></div></div>`;
+        }
+
+        function cleanInstallError(error) {
+          return String(error?.message || error || "The plugin could not be installed.")
+            .replace(/^Error invoking remote method 'unifyhub:install-plugin':\s*/i, "")
+            .replace(/^Error:\s*/i, "")
+            .trim();
+        }
+
+        function installErrorCategory(message) {
+          const text = String(message || "").toLowerCase();
+          if (text.includes("cannot declare core") || text.includes("reserved by unifyhub") || text.includes("reserved by a bundled")) return "Unauthorized access";
+          if (text.includes("does not contain a plugin.json") || text.includes("invalid plugin id")) return "Invalid plugin";
+          if (text.includes("already exists")) return "Already installed";
+          if (text.includes("eperm") || text.includes("eacces") || text.includes("permission") || text.includes("access is denied")) return "File access blocked";
+          return "Install failed";
+        }
+
+        function installErrorLogPath() {
+          return state.root ? `${state.root}\\logs\\plugin-manager.log` : "UnifyHub logs\\plugin-manager.log";
+        }
+
+        function installErrorSummary(category) {
+          if (category === "Unauthorized access") return "This plugin requests restricted UnifyHub privileges, so it cannot be installed as a user plugin.";
+          if (category === "Invalid plugin") return "UnifyHub could not find a valid plugin manifest in the selected folder.";
+          if (category === "Already installed") return "A plugin with this id is already installed.";
+          if (category === "File access blocked") return "Windows did not allow UnifyHub to copy the plugin files.";
+          return "UnifyHub could not install this plugin.";
+        }
+
+        function showInstallError(error) {
+          const message = cleanInstallError(error);
+          const category = installErrorCategory(message);
+          installErrorInfo = {
+            category,
+            summary: installErrorSummary(category),
+            message,
+            logPath: error?.logPath || installErrorLogPath()
+          };
+          statusText = "Install failed.";
+          render();
+        }
+
+        function installErrorDialog() {
+          if (!installErrorInfo) return "";
+          const category = escapeHtml(installErrorInfo.category);
+          const summary = escapeHtml(installErrorInfo.summary || installErrorSummary(installErrorInfo.category));
+          const message = escapeHtml(installErrorInfo.message);
+          return `<div role="presentation" class="MuiDialog-root MuiModal-root css-1egf66k"><div aria-hidden="true" class="MuiBackdrop-root MuiModal-backdrop css-1x7z3m2" data-action="install-error-close" style="opacity:1;transition:opacity 120ms cubic-bezier(0.4,0,0.2,1);"></div><div tabindex="0" data-testid="sentinelStart"></div><div class="MuiDialog-container MuiDialog-scrollPaper css-fh1hs4" role="presentation" tabindex="-1" data-action="install-error-close" style="opacity:1;transition:opacity 120ms cubic-bezier(0.4,0,0.2,1);"><div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation24 MuiDialog-paper MuiDialog-paperScrollPaper MuiDialog-paperWidthSm MuiDialog-paperFullWidth css-jws3r8" role="dialog" aria-labelledby="uh-install-error-dialog-title" aria-modal="true" style="--Paper-shadow:0px 36px 32px rgba(0,0,0,0.58);--Paper-overlay:linear-gradient(rgba(255,255,255,0.165),rgba(255,255,255,0.165));"><div class="MuiTypography-root MuiTypography-h6 MuiDialogTitle-root css-rrrssm" id="uh-install-error-dialog-title"><div class="MuiStack-root css-1ghls50"><div class="MuiStack-root css-18gwvlh"><h2 class="MuiTypography-root MuiTypography-h3 css-110xi6n">${category}</h2></div><button class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeSmall css-1uvbf3" tabindex="0" type="button" data-action="install-error-close" aria-label="close">${closeIcon()}</button></div></div><div class="MuiDialogContent-root css-16m2lg5"><p class="MuiTypography-root MuiTypography-body1 MuiTypography-gutterBottom css-1il12si">${summary}</p><pre class="uh-dialog-error">${message}</pre></div><div class="MuiDialogActions-root MuiDialogActions-spacing css-8dncs3"><button class="MuiButtonBase-root MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary MuiButton-root MuiButton-outlined MuiButton-outlinedSecondary MuiButton-sizeMedium MuiButton-outlinedSizeMedium MuiButton-colorSecondary css-19gz6c3" tabindex="0" type="button" data-action="install-error-open-log" style="height:32px;min-height:32px;padding:0 10px;line-height:20px;box-sizing:border-box;">Open log folder</button><button class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary css-l98j9z" tabindex="0" type="button" data-action="install-error-close" style="height:32px;min-height:32px;padding:0 10px;line-height:20px;box-sizing:border-box;">OK</button></div></div></div><div tabindex="0" data-testid="sentinelEnd"></div></div>`;
         }
 
         function applyDialog() {
@@ -911,12 +992,26 @@
             #${managerId} .uh-plugin-description{white-space:normal;line-height:1.5}
             #${managerId} .uh-plugin-meta-row{align-items:center}
             #${managerId} .uh-plugin-path{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#7b7b7b;font-size:.75rem;line-height:1rem}
-            #${managerId} .uh-empty{border:1px dashed #3a3a3a;border-radius:6px;padding:26px;color:#aaa;text-align:center;background:#181818}
-            #${managerId} .uh-empty-search{min-height:220px;padding:28px 0 20px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#d8d8d8}
-            #${managerId} .uh-empty-icon{color:#7b7b7b;margin-bottom:12px}
-            #${managerId} .uh-empty-icon svg{display:block;width:48px;height:48px}
-            #${managerId} .uh-empty-search h2{margin:0 0 8px;font-family:Inter, Helvetica, Arial, sans-serif;font-size:1rem;line-height:1.5rem;font-weight:600;color:#f4f4f4;letter-spacing:0}
-            #${managerId} .uh-empty-search p{margin:0 0 14px;max-width:640px;font-family:Inter, Helvetica, Arial, sans-serif;font-size:.875rem;line-height:1.25rem;color:#d0d0d0}
+            #${managerId} .uh-empty-state-card.css-jsvu1q{box-sizing:border-box;display:flex;justify-content:center;align-items:center;min-height:260px;width:100%;border:0;border-radius:0;background:transparent;color:#eeeeee;box-shadow:none}
+            #${managerId} .uh-loading-state-card.css-1n090k6{box-sizing:border-box;display:flex;justify-content:center;align-items:center;min-height:260px;width:100%;border:0;border-radius:0;background:transparent;color:#eeeeee;box-shadow:none}
+            #${managerId} .uh-loading-state-card .css-1m5zjfb{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+            #${managerId} .uh-loading-state-card .css-19idom{display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:var(--uh-text-muted,#7b7b7b)}
+            #${managerId} .uh-loading-state-card .css-hxftz5{margin:0;max-width:420px;font-family:Inter, Helvetica, Arial, sans-serif;font-size:.875rem;line-height:1.25rem;color:var(--uh-text-secondary,#d0d0d0);letter-spacing:0}
+            #${managerId} .uh-loading-state-card .css-1mg8wnd{display:inline-block;color:var(--uh-text-muted,#7b7b7b);animation:uh-progress-rotate 1.4s linear infinite}
+            #${managerId} .uh-loading-state-card .css-4ejps8{display:block;width:100%;height:100%}
+            #${managerId} .uh-loading-state-card .css-13odlrs{stroke:currentColor;stroke-dasharray:80px,200px;stroke-dashoffset:0;stroke-linecap:round;animation:uh-progress-dash 1.4s ease-in-out infinite}
+            @keyframes uh-progress-rotate{100%{transform:rotate(360deg)}}
+            @keyframes uh-progress-dash{0%{stroke-dasharray:1px,200px;stroke-dashoffset:0}50%{stroke-dasharray:100px,200px;stroke-dashoffset:-15px}100%{stroke-dasharray:100px,200px;stroke-dashoffset:-125px}}
+            #${managerId} .uh-empty-state-card .css-1m5zjfb{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+            #${managerId} .uh-empty-state-card .css-19idom{display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:#7b7b7b}
+            #${managerId} .uh-empty-state-card .css-19idom svg{display:block;width:48px;height:48px}
+            #${managerId} .uh-empty-state-card .css-1to2m9q{margin:0 0 8px;font-family:Inter, Helvetica, Arial, sans-serif;font-size:1rem;line-height:1.5rem;font-weight:600;color:#f4f4f4;letter-spacing:0}
+            #${managerId} .uh-empty-state-card .css-hxftz5{margin:0;max-width:420px;font-family:Inter, Helvetica, Arial, sans-serif;font-size:.875rem;line-height:1.25rem;color:#d0d0d0;letter-spacing:0}
+            #${managerId} .uh-empty-state-card .css-1mzerio{display:flex;align-items:center;justify-content:center;margin-top:16px}
+            #${managerId} .uh-empty-state-card .css-1efuv37{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;min-height:32px;padding:0 10px;border:1px solid rgba(10,110,200,.65);border-radius:6px;background:transparent;color:#79b8ff;font-family:Inter, Helvetica, Arial, sans-serif;font-weight:600;font-size:.813rem;line-height:1.25rem;text-transform:none}
+            #${managerId} .uh-empty-state-card .css-1efuv37:hover{background:rgba(10,110,200,.12);border-color:#0f6cbd;color:#aad3ff}
+            #${managerId} .uh-empty-state-card .css-wks9i5{display:inherit;margin:0;color:inherit}
+            #${managerId} .uh-empty-state-card .css-wks9i5 svg{display:block;width:1em;height:1em}
             #${managerId} .uh-plugin-actions{position:relative;display:flex;align-items:flex-start;align-self:center;flex:0 0 auto}
             #${managerId} .uh-menu-item[aria-disabled="true"]{opacity:.45;cursor:not-allowed;pointer-events:none}
             #${managerId} .uh-menu-danger .MuiListItemIcon-root,#${managerId} .uh-menu-danger .MuiTypography-root{color:#e38f8f}
@@ -950,9 +1045,9 @@
             }
             #${managerId}{background:var(--uh-bg);color:var(--uh-text);border-left:0;border-top:0}
             #${managerId} h1{color:var(--uh-title)}
-            #${managerId} .uh-kicker,#${managerId} .uh-status,#${managerId} .uh-meta,#${managerId} .uh-plugin-path,#${managerId} .uh-empty-icon{color:var(--uh-text-muted)}
-            #${managerId} .uh-subtitle,#${managerId} .css-c5zcjf,#${managerId} .uh-plugin-version,#${managerId} .uh-config-description,#${managerId} .uh-empty-search p{color:var(--uh-text-secondary)}
-            #${managerId} .uh-meta b,#${managerId} .css-pn9hyf,#${managerId} .uh-empty-search h2{color:var(--uh-title)}
+            #${managerId} .uh-kicker,#${managerId} .uh-status,#${managerId} .uh-meta,#${managerId} .uh-plugin-path,#${managerId} .uh-empty-state-card .css-19idom{color:var(--uh-text-muted)}
+            #${managerId} .uh-subtitle,#${managerId} .css-c5zcjf,#${managerId} .uh-plugin-version,#${managerId} .uh-config-description,#${managerId} .uh-empty-state-card .css-hxftz5{color:var(--uh-text-secondary)}
+            #${managerId} .uh-meta b,#${managerId} .css-pn9hyf,#${managerId} .uh-empty-state-card .css-1to2m9q{color:var(--uh-title)}
             #${managerId} .uh-search-wrap{background:var(--uh-surface-muted);border-color:var(--uh-border);color:var(--uh-text-muted)}
             #${managerId} .uh-search-wrap:hover{border-color:var(--uh-border-hover)}
             #${managerId} .uh-search-wrap:focus-within{border-color:rgb(19,97,173);box-shadow:0 0 0 1px rgb(19,97,173)}
@@ -983,7 +1078,10 @@
             #${managerId} .uh-toggle span{background:var(--uh-surface-muted);border-color:var(--uh-border)}
             #${managerId} .uh-toggle span:before{background:var(--uh-text-secondary)}
             #${managerId} .uh-plugin-logo{color:var(--uh-text-secondary)}
-            #${managerId} .uh-empty{border-color:var(--uh-border);background:var(--uh-surface);color:var(--uh-text-muted)}
+            #${managerId} .uh-empty-state-card.css-jsvu1q{background:transparent;color:var(--uh-text)}
+            #${managerId} .uh-loading-state-card.css-1n090k6{background:transparent;color:var(--uh-text)}
+            #${managerId} .uh-empty-state-card .css-1efuv37{border-color:var(--uh-primary-bg);color:var(--uh-primary)}
+            #${managerId} .uh-empty-state-card .css-1efuv37:hover{background:var(--uh-surface-hover);border-color:var(--uh-primary-bg);color:var(--uh-primary)}
             #${managerId}-portal{position:fixed;inset:0;z-index:2600;pointer-events:none;color-scheme:light dark;--uh-surface-raised:light-dark(#ffffff,#191919);--uh-surface-hover:light-dark(rgba(0,0,0,.04),rgba(255,255,255,.07));--uh-border:light-dark(#cbcbcb,rgb(58,58,58));--uh-frame-border:light-dark(#e8e8e8,rgb(58,58,58));--uh-text:light-dark(#1f1f1f,rgb(238,238,238));--uh-text-muted:light-dark(#6e6e6e,#a6a6a6);--uh-focus:rgb(19,97,173);--uh-primary-bg:#0f6cbd;--uh-dialog-shadow:none}
             #${managerId}-portal:empty{display:none}
             #${managerId}-portal .MuiModal-root{pointer-events:auto}
@@ -1042,19 +1140,33 @@
           return page;
         }
 
-        async function refresh() {
+        async function refresh(options = {}) {
+          const showLoading = options.showLoading !== false;
           const api = bridge();
           if (!api) {
             statusText = "UnifyHub bridge is not available. Reinstall the plugin-manager plugin and restart the dummy target.";
             render();
             return;
           }
+          if (showLoading) {
+            isRefreshing = true;
+            statusText = "";
+          }
+          const refreshStartedAt = performance.now();
+          render();
           try {
             state = await api.listPlugins();
+            pluginsLoaded = true;
             rememberAppliedConfigBaseline();
             statusText ||= "";
           } catch (error) {
             statusText = error.message || String(error);
+          } finally {
+            if (showLoading) {
+              const elapsed = performance.now() - refreshStartedAt;
+              if (elapsed < minRefreshLoadingMs) await delay(minRefreshLoadingMs - elapsed);
+              isRefreshing = false;
+            }
           }
           render();
         }
@@ -1072,13 +1184,19 @@
           const clearSearch = page.querySelector(".uh-search-clear-adornment");
           if (clearSearch) clearSearch.style.display = searchText ? "flex" : "none";
           const list = page.querySelector('[data-field="plugins"]');
+          if (isRefreshing) {
+            list.innerHTML = loadingState();
+            page.querySelector('[data-field="dialog"]').innerHTML = "";
+            ensurePortalRoot().innerHTML = installErrorDialog() || uninstallDialog() || applyDialog() || configDialog();
+            return;
+          }
           const normalizedSearch = searchText.trim().toLowerCase();
           const plugins = normalizedSearch
             ? (state.plugins || []).filter((plugin) => [plugin.id, plugin.name, plugin.description, plugin.path].some((value) => String(value || "").toLowerCase().includes(normalizedSearch)))
             : (state.plugins || []);
           list.innerHTML = plugins.length ? plugins.map(pluginCard).join("") : emptyState(Boolean(normalizedSearch));
           page.querySelector('[data-field="dialog"]').innerHTML = "";
-          ensurePortalRoot().innerHTML = uninstallDialog() || applyDialog() || configDialog();
+          ensurePortalRoot().innerHTML = installErrorDialog() || uninstallDialog() || applyDialog() || configDialog();
         }
 
         function menuItems() {
@@ -1226,18 +1344,56 @@
             if (action === "close-manage") { closeManageMenu(); return; }
             if (action === "dialog-cancel") { if (event.target.closest(".css-jws3r8") && !event.target.closest("button[data-action='dialog-cancel']")) return; closeUninstallDialog(); return; }
             if (action === "clear-search") { searchText = ""; render(); document.querySelector(`#${managerId} [data-field="search"]`)?.focus({ preventScroll: true }); return; }
+            if (action === "install-error-close") { if (event.target.closest(".css-jws3r8") && !event.target.closest("button[data-action='install-error-close']")) return; installErrorInfo = null; render(); return; }
             if (action === "apply") { applyDialogOpen = true; applyDialogError = ""; applyDialogBusy = false; statusText = ""; render(); return; }
             if (action === "apply-cancel") { if (event.target.closest(".css-jws3r8") && !event.target.closest("button[data-action='apply-cancel']")) return; if (applyDialogBusy) return; applyDialogOpen = false; applyDialogError = ""; render(); return; }
             if (action === "config-cancel") { if (event.target.closest(".css-jws3r8") && !event.target.closest("button[data-action='config-cancel']")) return; configDialogPluginId = ""; render(); return; }
             const api = bridge();
             if (!api) return;
-            if (action === "refresh") await refresh();
-            else if (action === "install") { statusText = "Select the plugin you wish to install."; render(); const result = await api.installPlugin(); statusText = result.canceled ? "Install canceled." : "Plugin installed. Enable it, then apply changes."; await refresh(); }
+            if (action === "refresh") await refresh({ showLoading: true });
+            else if (action === "install-error-open-log") { const result = await api.openLogFolder?.(); statusText = result?.ok ? "Opened log folder." : "Could not open log folder."; render(); }
+            else if (action === "install") {
+              statusText = "Select the plugin you wish to install.";
+              installErrorInfo = null;
+              render();
+              try {
+                const result = await api.installPlugin();
+                statusText = result.canceled ? "Install canceled." : "Plugin installed. Enable it, then apply changes.";
+                await refresh();
+              } catch (error) {
+                showInstallError(error);
+              }
+            }
             else if (action === "apply-confirm") { applyDialogBusy = true; applyDialogError = ""; render(); const result = await (api.restartApplyPlugins ? api.restartApplyPlugins() : api.applyPlugins()); applyDialogBusy = false; if (result.ok) { rememberAppliedConfigBaseline(true); applyDialogOpen = false; statusText = result.restarting ? "Restarting Unity Hub." : `Apply complete. Restart Unity Hub.\n${result.stdout || ""}`; } else { applyDialogError = formatApplyError(result); } render(); }
             else if (action === "restore") { statusText = "Restoring target backup."; render(); const result = await api.restoreTarget(); statusText = result.ok ? `Restore complete. Restart Unity Hub.\n${result.stdout || ""}` : `Restore failed.\n${result.stderr || result.error || ""}`; render(); }
-            else if (action.startsWith("toggle-btn:")) { const id = action.slice(11); const plugin = (state.plugins || []).find((item) => item.id === id); if (!plugin || plugin.core) return; state = await api.setPluginEnabled(id, !plugin.enabled); statusText = `${id} ${!plugin.enabled ? "enabled" : "disabled"}. Apply changes and restart.`; render(); }
+            else if (action.startsWith("toggle-btn:")) { const id = action.slice(11); const plugin = (state.plugins || []).find((item) => item.id === id); if (!plugin || plugin.disableable === false) return; state = await api.setPluginEnabled(id, !plugin.enabled); statusText = `${id} ${!plugin.enabled ? "enabled" : "disabled"}. Apply changes and restart.`; render(); }
             else if (action.startsWith("menu:config:")) { configDialogPluginId = action.slice(12); closeManageMenu(); render(); }
-            else if (action === "config-save") { if (!configDialogPluginId) return; const values = {}; document.querySelectorAll(`#${managerId} [data-config-key], #${managerId}-portal [data-config-key]`).forEach((input) => { values[input.dataset.configKey] = input.checked; }); const changedId = configDialogPluginId; state = await api.setPluginConfig(changedId, values); statusText = `${changedId} config saved. Apply changes and restart.`; configDialogPluginId = ""; render(); }
+            else if (action === "config-save") {
+              if (!configDialogPluginId) return;
+              const values = {};
+              document.querySelectorAll(`#${managerId} [data-config-key], #${managerId}-portal [data-config-key]`).forEach((input) => {
+                values[input.dataset.configKey] = input.checked;
+              });
+              const changedId = configDialogPluginId;
+              const plugin = (state.plugins || []).find((item) => item.id === changedId);
+              const nextSignature = plugin ? configSignatureFromValues(plugin, values) : JSON.stringify(values);
+              if (plugin && nextSignature === configSignature(plugin)) {
+                statusText = `${changedId} config unchanged.`;
+                configDialogPluginId = "";
+                render();
+                return;
+              }
+              state = await api.setPluginConfig(changedId, values);
+              const updatedPlugin = (state.plugins || []).find((item) => item.id === changedId);
+              const baseline = appliedConfigBaseline.get(changedId);
+              const restartNeeded = updatedPlugin ? hasConfigChanges(updatedPlugin) : baseline !== undefined && baseline !== nextSignature;
+              statusText = restartNeeded ? `${changedId} config saved. Restart Unity Hub to apply changes.` : `${changedId} config saved.`;
+              configDialogPluginId = "";
+              applyDialogOpen = restartNeeded;
+              applyDialogError = "";
+              applyDialogBusy = false;
+              render();
+            }
             else if (action.startsWith("menu:explorer:")) { const id = action.slice(14); closeManageMenu(); const result = await api.openPluginFolder(id); statusText = result?.ok ? `Opened ${id} plugin folder.` : `Could not open ${id} plugin folder.`; render(); }
             else if (action.startsWith("menu:reload:")) { const id = action.slice(12); closeManageMenu(); statusText = `${id}: plugin files reloaded in UI. Use Apply enabled to rebuild target.`; await refresh(); }
             else if (action.startsWith("menu:uninstall:")) { window.clearTimeout(dialogCloseTimer); closingUninstallId = ""; pendingUninstallId = action.slice(15); closeManageMenu(); }
@@ -1321,7 +1477,8 @@
           repairPluginNavActive(900);
           positionPage(page);
           schedulePositionSync(650);
-          await refresh();
+          if (pluginsLoaded) void refresh({ showLoading: false });
+          else await refresh({ showLoading: true });
         }
 
         function syncPluginRoute() {
@@ -1360,7 +1517,9 @@
             document.documentElement.classList.add("uh-keyboard-mode");
           }
         }, true);
-        document.addEventListener("pointerdown", () => document.documentElement.classList.remove("uh-keyboard-mode"), true);
+        document.addEventListener("pointerdown", (event) => {
+          document.documentElement.classList.remove("uh-keyboard-mode");
+        }, true);
         document.addEventListener("mousedown", () => document.documentElement.classList.remove("uh-keyboard-mode"), true);
         document.addEventListener("focusin", (event) => {
           if (!document.getElementById(managerId)?.classList.contains("is-open")) return;
