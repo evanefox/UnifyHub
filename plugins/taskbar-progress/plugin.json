@@ -1,8 +1,8 @@
 {
   "id": "taskbar-progress",
-  "name": "Taskbar Progress",
+  "name": "Better Progress",
   "version": "1.0.0",
-  "description": "Make Unity Hub download progress visible in the Windows taskbar.",
+  "description": "Shows Unity Hub download progress in the Windows taskbar and sends a Windows notification when downloads or installs complete.",
   "replacements": [
     {
       "filePattern": "build/main/EventBroadcaster-*.js",
