@@ -1,4 +1,10 @@
-# UnifyHub
+<p align="center">
+<img width="100" height="100" alt="UnifyHub_Logo" src="https://github.com/user-attachments/assets/ea1130f8-a151-4bda-bc71-bdfb6a1e6526" />
+</p>
+
+<h1 align="center">UnifyHub</h1>
+
+
 
 An open-source plugin framework for expanding, enhancing, and customizing Unity Hub.
 
