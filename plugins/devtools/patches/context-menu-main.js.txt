@@ -34,6 +34,60 @@ function installUnifyHubDevTools() {
 	initElectronDebug({ isEnabled: true, showDevTools: !!config.openDevToolsOnStart, devToolsMode: "detach" });
 	if (config.enableRightClickInspect !== false) installUnifyHubContextMenu();
 }
+function unifyHubTitleBarOverlayOptions(current = {}) {
+	return {
+		...current,
+		color: current.color || "#00000000",
+		symbolColor: current.symbolColor || "#202020",
+		height: current.height ?? 40
+	};
+}
+function syncUnifyHubTitleBarOverlayWithModals(win) {
+	const marker = Symbol.for("unifyhub.titleBarOverlayModalSync");
+	if (win[marker] || !win?.webContents) return;
+	win[marker] = true;
+	let lastOverlay = "";
+	const sync = async () => {
+		if (win.isDestroyed?.() || win.webContents?.isDestroyed?.()) return;
+		const state = await win.webContents.executeJavaScript(`(() => {
+			const numberParts = (value) => (String(value || "").match(/\\d+(?:\\.\\d+)?/g) || []).map(Number);
+			const brightnessOf = (value) => {
+				const rgb = numberParts(value).slice(0, 3);
+				return rgb.length === 3 ? ((rgb[0] * 299) + (rgb[1] * 587) + (rgb[2] * 114)) / 1000 : null;
+			};
+			const nativeRows = [...document.querySelectorAll('.cloudui-side-nav-row')]
+				.filter((row) => !row.closest('#unifyhub-plugin-manager-nav') && !row.closest('.uh-runtime-nav'));
+			const hasLightNavClasses = nativeRows.some((row) => row.classList.contains('css-g720yb') || row.classList.contains('css-1bfpdx4'));
+			const rowTextBrightness = nativeRows
+				.map((row) => brightnessOf(getComputedStyle(row).color))
+				.find((value) => value !== null);
+			const sidebar = document.querySelector('.MuiDrawer-paper') || document.querySelector('.cloudui-side-nav-body');
+			const sidebarBrightness = sidebar ? brightnessOf(getComputedStyle(sidebar).backgroundColor) : null;
+			let resolvedThemeBrightness = null;
+			const probe = document.createElement('div');
+			probe.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;background:light-dark(#ffffff,#131313);pointer-events:none';
+			document.documentElement.appendChild(probe);
+			resolvedThemeBrightness = brightnessOf(getComputedStyle(probe).backgroundColor);
+			probe.remove();
+			const isLight = hasLightNavClasses || (sidebarBrightness !== null && sidebarBrightness > 170) || (rowTextBrightness !== null && rowTextBrightness < 120) || (nativeRows.length === 0 && resolvedThemeBrightness !== null && resolvedThemeBrightness > 170);
+			return { isLight };
+		})()`, true).catch(() => ({ isLight: false }));
+		const color = "#00000000";
+		const symbolColor = state.isLight ? "#202020" : "#eeeeee";
+		const overlay = `${color}:${symbolColor}`;
+		if (overlay === lastOverlay) return;
+		lastOverlay = overlay;
+		try {
+			win.setTitleBarOverlay?.(unifyHubTitleBarOverlayOptions({ color, symbolColor }));
+		} catch {}
+	};
+	const timer = setInterval(sync, 100);
+	win.on?.("closed", () => clearInterval(timer));
+	win.webContents.once("dom-ready", sync);
+	win.webContents.once("did-finish-load", sync);
+	win.webContents.on("did-navigate-in-page", sync);
+	[50, 150, 300, 600, 1000, 1600].forEach((delay) => setTimeout(sync, delay));
+}
 function applyUnifyHubWindowTweaks(options = {}) {
 	const config = readUnifyHubDevToolsConfig();
 	if (!config.enabled) return;
@@ -52,10 +106,7 @@ function applyUnifyHubWindowTweaks(options = {}) {
 	} else if (config.enableWindowsSnapLayoutButtons && process.platform === "win32" && options.title === "Unity Hub") {
 		options.frame = false;
 		options.titleBarStyle = "hidden";
-		options.titleBarOverlay = {
-			...(options.titleBarOverlay || {}),
-			height: (options?.titleBarOverlay)?.height ?? 40
-		};
+		options.titleBarOverlay = unifyHubTitleBarOverlayOptions(options.titleBarOverlay || {});
 		options.autoHideMenuBar = true;
 		options.menuBarVisible = false;
 		delete options.trafficLightPosition;
@@ -69,6 +120,10 @@ function installUnifyHubNativeTitleBarStyle(win, options = {}) {
 		win.setAutoHideMenuBar?.(true);
 		win.setMenuBarVisibility?.(false);
 		win.setMenu?.(null);
+		if (config.enableWindowsSnapLayoutButtons && !config.useNativeWindowsTitleBar) {
+			win.setTitleBarOverlay?.(unifyHubTitleBarOverlayOptions());
+			syncUnifyHubTitleBarOverlayWithModals(win);
+		}
 	} catch {}
 	const reserveSnapOverlaySpace = config.enableWindowsSnapLayoutButtons && !config.useNativeWindowsTitleBar;
 	const css = `
@@ -80,8 +135,28 @@ function installUnifyHubNativeTitleBarStyle(win, options = {}) {
 		.css-1rc505s .css-1yawtke {
 			margin-right: 138px !important;
 		}
+		.css-1rc505s::after {
+			content: "";
+			position: fixed;
+			top: 0;
+			right: 0;
+			width: 138px;
+			height: 40px;
+			background: transparent;
+			pointer-events: none;
+			z-index: 2147483646;
+		}
 		.css-1rc505s .css-16z5tfh {
 			display: none !important;
+		}
+		.MuiDialog-container,
+		.MuiModal-root .css-fh1hs4 {
+			box-sizing: border-box !important;
+			padding-top: 14px !important;
+		}
+		.MuiDialog-paper,
+		.MuiModal-root .css-jws3r8 {
+			max-height: calc(100% - 78px) !important;
 		}
 		` : ""}
 	`;

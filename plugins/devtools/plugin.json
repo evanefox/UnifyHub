@@ -35,7 +35,7 @@
     {
       "key": "enableWindowsSnapLayoutButtons",
       "type": "checkbox",
-      "label": "Enable Windows snap layout buttons",
+      "label": "Enable Windows snap layouts support",
       "description": "Use Electron's native Windows title bar overlay buttons so hovering Maximize can show Windows 11 snap layouts.",
       "default": false
     }
