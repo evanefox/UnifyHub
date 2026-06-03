@@ -104,6 +104,26 @@ function setUnifyHubTaskbarProgress(summary, source = "live") {
 	}
 }
 
+function updateUnifyHubTaskbarProgressForUninstall(phase, editor = {}) {
+	if (process.platform !== "win32") return;
+	const summary = /error/i.test(String(phase))
+		? { value: 1, mode: "error" }
+		: /finish|cancel/i.test(String(phase))
+			? { value: -1, mode: "none" }
+			: { value: 2, mode: "indeterminate" };
+	taskbarProgressLog("uninstall-summary", {
+		phase,
+		editor: {
+			version: editor?.version,
+			architecture: editor?.architecture,
+			location: editor?.location,
+			error: editor?.error
+		},
+		summary
+	});
+	setUnifyHubTaskbarProgress(summary, "uninstall");
+}
+
 function updateUnifyHubTaskbarProgressFromDownload(update) {
 	if (!update || typeof update !== "object") return;
 	const state = String(update.state || "");

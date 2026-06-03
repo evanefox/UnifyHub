@@ -1,0 +1,27 @@
+	async uninstallEditor(editor) {
+		const uninstallProgressItem = {
+			version: editor?.version,
+			architecture: editor?.architecture,
+			location: editor?.location
+		};
+		try {
+			updateUnifyHubTaskbarProgressForUninstall("start", uninstallProgressItem);
+			if ((await unityInstaller.prepareInstallService())?.cancelled) {
+				updateUnifyHubTaskbarProgressForUninstall("cancel", uninstallProgressItem);
+				return { cancelled: true };
+			}
+			if ((await Promise.all(editor.location.map((editorPath) => unityInstaller.uninstall(editor, new EditorApp({
+				editorPath,
+				version: editor.version,
+				architecture: editor.architecture
+			}).path)))).some((response) => response?.cancelled)) {
+				updateUnifyHubTaskbarProgressForUninstall("cancel", uninstallProgressItem);
+				return { cancelled: true };
+			}
+			await this.editorList.removeInstalledEditor(editor);
+			updateUnifyHubTaskbarProgressForUninstall("finish", uninstallProgressItem);
+		} catch (error) {
+			updateUnifyHubTaskbarProgressForUninstall("error", { ...uninstallProgressItem, error: error?.message || String(error) });
+			throw new Error(`The Editor ${getUniqueIdentifier(editor)} could not be uninstalled.`, { cause: error });
+		}
+	}

@@ -34,6 +34,13 @@
     },
     {
       "filePattern": "build/main/app-*.js",
+      "find": "\tasync uninstallEditor(editor) {\n\t\ttry {\n\t\t\tif ((await unityInstaller.prepareInstallService())?.cancelled) return { cancelled: true };\n\t\t\tif ((await Promise.all(editor.location.map((editorPath) => unityInstaller.uninstall(editor, new EditorApp({\n\t\t\t\teditorPath,\n\t\t\t\tversion: editor.version,\n\t\t\t\tarchitecture: editor.architecture\n\t\t\t}).path)))).some((response) => response?.cancelled)) return { cancelled: true };\n\t\t\tawait this.editorList.removeInstalledEditor(editor);\n\t\t} catch (error) {\n\t\t\tthrow new Error(`The Editor ${getUniqueIdentifier(editor)} could not be uninstalled.`, { cause: error });\n\t\t}\n\t}",
+      "replaceFromFile": "patches/uninstall-progress-call.js.txt",
+      "alreadyPatchedFind": "updateUnifyHubTaskbarProgressForUninstall(\"start\", uninstallProgressItem);",
+      "once": true
+    },
+    {
+      "filePattern": "build/main/app-*.js",
       "find": "var BROADCAST_DEBOUNCE_TIME = 500;\nvar InstallationManager = class {",
       "replaceFromFile": "patches/install-toast-support.js.txt",
       "alreadyPatchedFind": "notifyUnifyHubEditorInstallComplete",
