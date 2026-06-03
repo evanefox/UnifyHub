@@ -5,7 +5,8 @@ function readUnifyHubDevToolsConfig() {
 		openDevToolsOnStart: false,
 		enableRightClickInspect: true,
 		disableMinimumWindowSize: false,
-		useNativeWindowsTitleBar: false
+		useNativeWindowsTitleBar: false,
+		enableWindowsSnapLayoutButtons: false
 	};
 	try {
 		const projectRoot = process.env.UNIFYHUB_HOME || __UNIFYHUB_PROJECT_ROOT_JSON__ || path.resolve(process.resourcesPath || app.getAppPath(), "..", "..", "..");
@@ -48,22 +49,41 @@ function applyUnifyHubWindowTweaks(options = {}) {
 		delete options.titleBarStyle;
 		delete options.titleBarOverlay;
 		delete options.trafficLightPosition;
+	} else if (config.enableWindowsSnapLayoutButtons && process.platform === "win32" && options.title === "Unity Hub") {
+		options.frame = false;
+		options.titleBarStyle = "hidden";
+		options.titleBarOverlay = {
+			...(options.titleBarOverlay || {}),
+			height: (options?.titleBarOverlay)?.height ?? 40
+		};
+		options.autoHideMenuBar = true;
+		options.menuBarVisible = false;
+		delete options.trafficLightPosition;
 	}
 }
 function installUnifyHubNativeTitleBarStyle(win, options = {}) {
 	const config = readUnifyHubDevToolsConfig();
 	if (!config.enabled) return;
-	if (!config.useNativeWindowsTitleBar || process.platform !== "win32" || options.title !== "Unity Hub" || !win?.webContents) return;
+	if ((!config.useNativeWindowsTitleBar && !config.enableWindowsSnapLayoutButtons) || process.platform !== "win32" || options.title !== "Unity Hub" || !win?.webContents) return;
 	try {
 		win.setAutoHideMenuBar?.(true);
 		win.setMenuBarVisibility?.(false);
 		win.setMenu?.(null);
 	} catch {}
+	const reserveSnapOverlaySpace = config.enableWindowsSnapLayoutButtons && !config.useNativeWindowsTitleBar;
 	const css = `
 		.css-1rc505s .css-1xhj18k,
 		.css-1rc505s [aria-label="Minimize"],
 		.css-1rc505s [aria-label="Maximize"],
 		.css-1rc505s [aria-label="Close"] { display: none !important; }
+		${reserveSnapOverlaySpace ? `
+		.css-1rc505s .css-1yawtke {
+			margin-right: 138px !important;
+		}
+		.css-1rc505s .css-16z5tfh {
+			display: none !important;
+		}
+		` : ""}
 	`;
 	const inject = () => {
 		if (win.isDestroyed?.() || win.webContents?.isDestroyed?.()) return;

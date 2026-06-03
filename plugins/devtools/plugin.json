@@ -31,6 +31,13 @@
       "label": "Use Windows native title bar",
       "description": "Use the normal Windows title bar instead of Unity Hub's custom frameless title bar.",
       "default": false
+    },
+    {
+      "key": "enableWindowsSnapLayoutButtons",
+      "type": "checkbox",
+      "label": "Enable Windows snap layout buttons",
+      "description": "Use Electron's native Windows title bar overlay buttons so hovering Maximize can show Windows 11 snap layouts.",
+      "default": false
     }
   ],
   "replacements": [
