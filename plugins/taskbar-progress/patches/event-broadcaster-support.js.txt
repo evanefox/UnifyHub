@@ -1,5 +1,5 @@
-import { t as IOutputServiceId } from "./output-service-BK5FAE9Y.js";
 import { BrowserWindow } from "electron";
+//#region src/main/services/eventBroadcaster/EventBroadcaster.ts
 
 function installUnifyHubTaskbarProgress() {
 	if (globalThis.__unifyHubTaskbarProgressInstalled) return;

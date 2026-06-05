@@ -105,7 +105,7 @@ async function applyTextReplacement(text, replacement, plugin, context) {
     return { text, status: 'already-applied' };
   }
 
-  const find = replacement.find;
+  const find = replacement.resolvedFind || replacement.find;
   const replace = await replacementText(replacement, plugin, context);
   const count = text.split(find).length - 1;
 
@@ -142,39 +142,76 @@ function globToRegExp(pattern) {
 
 async function resolveReplacementFiles(asar, payloads, plugins) {
   const filePaths = [...payloads.keys()];
+  const compatibilityResults = [];
   for (const plugin of plugins) {
     const resolved = [];
+    let incompatibility = null;
     for (const replacement of plugin.replacements) {
       const pattern = replacement.filePattern || replacement.file;
       if (!pattern) throw new Error(`Plugin ${plugin.id} replacement needs file or filePattern.`);
-      if (!replacement.filePattern && !pattern.includes('*')) {
-        resolved.push(replacement);
-        continue;
-      }
 
-      const matcher = globToRegExp(pattern);
-      const candidatePaths = filePaths.filter((filePath) => matcher.test(filePath));
+      const hasWildcard = replacement.filePattern || pattern.includes('*');
+      const matcher = hasWildcard ? globToRegExp(pattern) : null;
+      const candidatePaths = hasWildcard
+        ? filePaths.filter((filePath) => matcher.test(filePath))
+        : filePaths.filter((filePath) => filePath === pattern);
       const matches = [];
       for (const filePath of candidatePaths) {
         const node = getNode(asar.header, filePath);
         const text = (await readArchivedFile(asar, node)).toString('utf8');
         const already = replacement.alreadyPatchedFind && text.includes(replacement.alreadyPatchedFind);
-        const fresh = replacement.find && text.includes(replacement.find);
-        if (already || fresh) matches.push(filePath);
+        const findCandidates = [
+          ...(typeof replacement.find === 'string' ? [replacement.find] : []),
+          ...(Array.isArray(replacement.findAlternatives) ? replacement.findAlternatives : []),
+        ];
+        const resolvedFind = findCandidates.find((candidate) => text.includes(candidate));
+        if (already || resolvedFind) {
+          const count = resolvedFind ? text.split(resolvedFind).length - 1 : 1;
+          matches.push({ filePath, resolvedFind, count });
+        }
       }
 
       if (matches.length === 0) {
         if (replacement.required === false) continue;
-        throw new Error(`Plugin ${plugin.id} could not resolve ${pattern}; no candidate contained the patch anchor.`);
+        incompatibility = `could not resolve ${pattern}; no candidate contained a supported patch anchor`;
+        break;
       }
       if (matches.length > 1 && replacement.once !== false) {
-        throw new Error(`Plugin ${plugin.id} resolved ${pattern} to multiple files: ${matches.join(', ')}`);
+        incompatibility = `resolved ${pattern} to multiple files: ${matches.map((match) => match.filePath).join(', ')}`;
+        break;
+      }
+      if (replacement.once !== false && matches.some((match) => match.count > 1)) {
+        incompatibility = `found an ambiguous patch anchor in ${matches.filter((match) => match.count > 1).map((match) => match.filePath).join(', ')}`;
+        break;
       }
 
-      for (const filePath of matches) resolved.push({ ...replacement, file: filePath, resolvedFrom: pattern });
+      for (const match of matches) {
+        resolved.push({
+          ...replacement,
+          file: match.filePath,
+          resolvedFrom: pattern,
+          resolvedFind: match.resolvedFind || replacement.find,
+        });
+      }
+    }
+
+    if (incompatibility) {
+      if (plugin.compatibility?.onMismatch === 'skip-plugin' && !plugin.core) {
+        plugin.replacements = [];
+        plugin.compatibilitySkipped = true;
+        compatibilityResults.push({
+          plugin: plugin.id,
+          file: '',
+          status: 'skipped-incompatible',
+          reason: incompatibility,
+        });
+        continue;
+      }
+      throw new Error(`Plugin ${plugin.id} ${incompatibility}.`);
     }
     plugin.replacements = resolved;
   }
+  return compatibilityResults;
 }
 
 function normalizePlugin(plugin) {
@@ -194,7 +231,7 @@ export async function createPatchedAsar({ sourcePath, outputPath, plugins, conte
       if (!node.unpacked && typeof node.size === 'number') payloads.set(filePath, null);
     });
 
-    await resolveReplacementFiles(asar, payloads, normalizedPlugins);
+    results.push(...await resolveReplacementFiles(asar, payloads, normalizedPlugins));
 
     for (const filePath of payloads.keys()) {
       const node = getNode(asar.header, filePath);
@@ -232,7 +269,12 @@ export async function createPatchedAsar({ sourcePath, outputPath, plugins, conte
   await mkdir(dirname(outputPath), { recursive: true });
   await writeFile(outputPath, Buffer.concat(chunks));
 
-  return { outputPath, plugins: normalizedPlugins.map((plugin) => plugin.id), results };
+  return {
+    outputPath,
+    plugins: normalizedPlugins.filter((plugin) => !plugin.compatibilitySkipped).map((plugin) => plugin.id),
+    skippedPlugins: normalizedPlugins.filter((plugin) => plugin.compatibilitySkipped).map((plugin) => plugin.id),
+    results,
+  };
 }
 
 export async function readAsarPackageInfo(filePath) {

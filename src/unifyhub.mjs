@@ -414,7 +414,11 @@ async function commandBuild(args, target, sourcePath, outputPath, context) {
   if (args.json) return printJson({ command: 'build', target: target.id, sourcePath, outputPath, ...result });
   if (!args.quiet) {
     console.log(`Built ${outputPath}`);
-    for (const item of result.results) console.log(`  ${item.status}: ${item.plugin} -> ${item.file}`);
+    for (const item of result.results) {
+      const target = item.file ? ` -> ${item.file}` : '';
+      const reason = item.reason ? ` (${item.reason})` : '';
+      console.log(`  ${item.status}: ${item.plugin}${target}${reason}`);
+    }
   }
   return result;
 }
@@ -431,6 +435,9 @@ async function commandApply(args, target, sourcePath, outputPath, backupPath, co
   if (args.json) return printJson(output);
   if (!args.quiet) {
     console.log(`Applied ${result.plugins.join(', ')} to ${target.name}`);
+    for (const item of result.results.filter((entry) => entry.status === 'skipped-incompatible')) {
+      console.warn(`Skipped incompatible plugin ${item.plugin}: ${item.reason}`);
+    }
     if (backup.backupRefreshed) console.log(`Backup refreshed: ${backup.reason}`);
     console.log(`Data: ${targetDataDir(target)}`);
   }
