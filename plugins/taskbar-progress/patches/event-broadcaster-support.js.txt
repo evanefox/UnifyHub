@@ -1,10 +1,31 @@
-import { BrowserWindow } from "electron";
+import path from "node:path";
+import { BrowserWindow, Notification, app } from "electron";
 //#region src/main/services/eventBroadcaster/EventBroadcaster.ts
 
 function installUnifyHubTaskbarProgress() {
 	if (globalThis.__unifyHubTaskbarProgressInstalled) return;
 	globalThis.__unifyHubTaskbarProgressInstalled = true;
 	globalThis.__unifyHubTaskbarProgressState = { value: -1, mode: "none", updatedAt: 0 };
+}
+
+function updateUnifyHubTaskbarProgressForUninstall(phase, editor = {}) {
+	if (process.platform !== "win32") return;
+	const summary = /error/i.test(String(phase))
+		? { value: 1, mode: "error" }
+		: /finish|cancel/i.test(String(phase))
+			? { value: -1, mode: "none" }
+			: { value: 2, mode: "indeterminate" };
+	taskbarProgressLog("uninstall-summary", {
+		phase,
+		editor: {
+			version: editor?.version,
+			architecture: editor?.architecture,
+			location: editor?.location,
+			error: editor?.error
+		},
+		summary
+	});
+	setTaskbarProgress(summary, "uninstall");
 }
 
 function toArray(value) {
@@ -191,3 +212,40 @@ function updateUnifyHubTaskbarProgress(eventName, ...content) {
 		setTaskbarProgress(summarizeDownloadProgress(content?.[0]), "broadcast-download");
 	}
 }
+
+function notifyUnifyHubEditorInstallCompleteFromTaskbarProgress(metadata) {
+	try {
+		if (!metadata || (metadata.type && metadata.type !== "editor" && metadata.type !== "EDITOR")) return;
+		const key = metadata.uid || metadata.itemName || metadata.itemDisplayName;
+		if (!key) return;
+		const notified = globalThis.__unifyHubInstallToastNotified || new Set();
+		globalThis.__unifyHubInstallToastNotified = notified;
+		if (notified.has(key)) return;
+		notified.add(key);
+		const editorName = metadata.itemDisplayName || metadata.productName || metadata.itemName || "Unity Editor";
+		const title = "Editor application successfully installed";
+		const body = `${editorName} is ready. Open Unity Hub to continue.`;
+		const focusUnityHub = () => {
+			try { app.focus({ steal: true }); } catch {}
+			for (const window of BrowserWindow.getAllWindows()) {
+				if (!window || window.isDestroyed()) continue;
+				try {
+					window.show();
+					window.focus();
+				} catch {}
+			}
+		};
+		const icon = app.isPackaged ? path.join(app.getAppPath(), "images/tray/trayIconWindows.ico") : path.resolve("images/tray/trayIconWindows.ico");
+		if (Notification.isSupported()) {
+			const notification = new Notification({ title, body, icon });
+			notification.on("click", focusUnityHub);
+			notification.show();
+		}
+	} catch (error) {
+		taskbarProgressLog("install-toast-error", { error: error?.message || String(error) });
+	}
+}
+
+globalThis.__unifyHubTaskbarProgressForUninstall = updateUnifyHubTaskbarProgressForUninstall;
+globalThis.__unifyHubNotifyEditorInstallComplete = notifyUnifyHubEditorInstallCompleteFromTaskbarProgress;
+

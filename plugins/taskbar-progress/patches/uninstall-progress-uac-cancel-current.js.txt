@@ -1,0 +1,4 @@
+if ((await this.#unityInstaller.prepareInstallService())?.cancelled) {
+				globalThis.__unifyHubTaskbarProgressForUninstall?.("cancel", uninstallProgressItem);
+				return { cancelled: true };
+			}

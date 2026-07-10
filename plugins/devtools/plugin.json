@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "devtools",
   "name": "Built-in DevTools",
   "version": "1.0.0",
@@ -44,22 +44,15 @@
     {
       "filePattern": "build/main/app-*.js",
       "find": "initElectronDebug();",
-      "replace": "installUnifyHubDevTools();",
-      "alreadyPatchedFind": "installUnifyHubDevTools();",
+      "replaceFromFile": "patches/devtools-init-call.js.txt",
+      "alreadyPatchedFind": "UNIFYHUB_DEVTOOLS_INIT_PATCH",
       "once": true
     },
     {
-      "filePattern": "build/main/app-*.js",
-      "find": "}\n//#endregion\n//#region src/types/modules/main-services.ts",
-      "replaceFromFile": "patches/context-menu-main.js.txt",
-      "alreadyPatchedFind": "function applyUnifyHubWindowTweaks(",
-      "once": true
-    },
-    {
-      "filePattern": "build/main/app-*.js",
-      "find": "\t\tthis.browserWindow = new BrowserWindow(options);",
-      "replace": "\t\tapplyUnifyHubWindowTweaks(options);\n\t\tthis.browserWindow = new BrowserWindow(options);\n\t\tinstallUnifyHubNativeTitleBarStyle(this.browserWindow, options);",
-      "alreadyPatchedFind": "applyUnifyHubWindowTweaks(options);",
+      "filePattern": "build/main/*.js",
+      "find": "new BrowserWindow(options);",
+      "replaceFromFile": "patches/browser-window-wrapper.js.txt",
+      "alreadyPatchedFind": "UNIFYHUB_BROWSER_WINDOW_PATCH",
       "once": true
     }
   ]

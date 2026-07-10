@@ -12,7 +12,10 @@
       "find": "//#region src/main/services/eventBroadcaster/EventBroadcaster.ts",
       "replaceFromFile": "patches/event-broadcaster-support.js.txt",
       "alreadyPatchedFind": "installUnifyHubTaskbarProgress",
-      "once": true
+      "once": true,
+      "findAlternatives": [
+        "//#region ../../../packages/core/src/services/eventBroadcaster/EventBroadcaster.ts"
+      ]
     },
     {
       "filePattern": "build/main/EventBroadcaster-*.js",
@@ -22,35 +25,75 @@
       "once": true
     },
     {
-      "filePattern": "build/main/app-*.js",
+      "filePattern": "build/main/*.js",
       "find": "var STATE_CHANGE_HANDLER_SUPPRESSING_STATES = [",
       "replaceFromFile": "patches/download-progress-support.js.txt",
       "alreadyPatchedFind": "updateUnifyHubTaskbarProgressFromDownload",
       "once": true
     },
     {
-      "filePattern": "build/main/app-*.js",
+      "filePattern": "build/main/*.js",
       "find": "\t\tthis.notifyParent(this.getStatus());\n\t}\n\t/** *********************\n\tState Machine Actions",
       "replaceFromFile": "patches/download-progress-live.js.txt",
       "alreadyPatchedFind": "updateUnifyHubTaskbarProgressFromDownload(this.getStatus());",
+      "once": true,
+      "required": false
+    },
+    {
+      "filePattern": "build/main/*.js",
+      "find": "async uninstallEditor(editor) {\n\t\ttry {",
+      "replaceFromFile": "patches/uninstall-progress-start.js.txt",
+      "alreadyPatchedFind": "const uninstallProgressItem = {",
       "once": true
     },
     {
-      "filePattern": "build/main/app-*.js",
-      "find": "async uninstallEditor(editor) {\n\t\ttry {\n\t\t\tif ((await unityInstaller.prepareInstallService())?.cancelled) return { cancelled: true };\n\t\t\tif ((await Promise.all(editor.location.map((editorPath) => unityInstaller.uninstall(editor, new EditorApp({\n\t\t\t\teditorPath,\n\t\t\t\tversion: editor.version,\n\t\t\t\tarchitecture: editor.architecture\n\t\t\t}).path)))).some((response) => response?.cancelled)) return { cancelled: true };\n\t\t\tawait this.editorList.removeInstalledEditor(editor);\n\t\t} catch (error) {\n\t\t\tthrow new Error(`The Editor ${getUniqueIdentifier(editor)} could not be uninstalled.`, { cause: error });\n\t\t}\n\t}",
-      "replaceFromFile": "patches/uninstall-progress-call.js.txt",
-      "alreadyPatchedFind": "updateUnifyHubTaskbarProgressForUninstall(\"start\", uninstallProgressItem);",
+      "filePattern": "build/main/*.js",
+      "find": "if ((await this.#unityInstaller.prepareInstallService())?.cancelled) return { cancelled: true };",
+      "replaceFromFile": "patches/uninstall-progress-uac-cancel-current.js.txt",
+      "alreadyPatchedFind": "globalThis.__unifyHubTaskbarProgressForUninstall?.(\"cancel\", uninstallProgressItem);",
+      "once": true,
+      "required": false
+    },
+    {
+      "filePattern": "build/main/*.js",
+      "find": "if ((await unityInstaller.prepareInstallService())?.cancelled) return { cancelled: true };",
+      "replaceFromFile": "patches/uninstall-progress-uac-cancel-old.js.txt",
+      "alreadyPatchedFind": "globalThis.__unifyHubTaskbarProgressForUninstall?.(\"cancel\", uninstallProgressItem);",
+      "once": true,
+      "required": false
+    },
+    {
+      "filePattern": "build/main/*.js",
+      "find": "if ((await Promise.all(editor.location.map((editorPath) => this.#unityInstaller.uninstall(editor, getEditorAppPath(editorPath))))).some((response) => response?.cancelled)) return { cancelled: true };",
+      "replaceFromFile": "patches/uninstall-progress-uninstall-cancel-current.js.txt",
+      "alreadyPatchedFind": "globalThis.__unifyHubTaskbarProgressForUninstall?.(\"cancel\", uninstallProgressItem);",
+      "once": true,
+      "required": false
+    },
+    {
+      "filePattern": "build/main/*.js",
+      "find": "if ((await Promise.all(editor.location.map((editorPath) => unityInstaller.uninstall(editor, new EditorApp({\n\t\t\t\teditorPath,\n\t\t\t\tversion: editor.version,\n\t\t\t\tarchitecture: editor.architecture\n\t\t\t}).path)))).some((response) => response?.cancelled)) return { cancelled: true };",
+      "replaceFromFile": "patches/uninstall-progress-uninstall-cancel-old.js.txt",
+      "alreadyPatchedFind": "globalThis.__unifyHubTaskbarProgressForUninstall?.(\"cancel\", uninstallProgressItem);",
+      "once": true,
+      "required": false
+    },
+    {
+      "filePattern": "build/main/*.js",
+      "find": "await this.editorList.removeInstalledEditor(editor);",
+      "replaceFromFile": "patches/uninstall-progress-finish.js.txt",
+      "alreadyPatchedFind": "globalThis.__unifyHubTaskbarProgressForUninstall?.(\"finish\", uninstallProgressItem);",
       "once": true
     },
     {
-      "filePattern": "build/main/app-*.js",
+      "filePattern": "build/main/*.js",
       "find": "var BROADCAST_DEBOUNCE_TIME = 500;\nvar InstallationManager = class {",
       "replaceFromFile": "patches/install-toast-support.js.txt",
       "alreadyPatchedFind": "notifyUnifyHubEditorInstallComplete",
       "once": true
     },
     {
-      "filePattern": "build/main/app-*.js",
+      "filePattern": "build/main/*.js",
       "find": "\t\t\t\t\t\t\t\tthis.#eventBroadcaster?.broadcast(RENDERER_EVENTS.EDITOR_INSTALL_FINISH, installerItem.metadata.itemName);",
       "replaceFromFile": "patches/install-toast-call.js.txt",
       "alreadyPatchedFind": "notifyUnifyHubEditorInstallComplete(installerItem.metadata);",

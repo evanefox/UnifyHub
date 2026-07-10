@@ -1,0 +1,81 @@
+/* UNIFYHUB_DEVTOOLS_INIT_PATCH */
+(() => {
+	function readUnifyHubDevToolsConfig() {
+		const defaults = {
+			enabled: false,
+			openDevToolsOnStart: false,
+			enableRightClickInspect: true,
+			disableMinimumWindowSize: false,
+			useNativeWindowsTitleBar: false,
+			enableWindowsSnapLayoutButtons: false
+		};
+		try {
+			const projectRoot = process.env.UNIFYHUB_HOME || __UNIFYHUB_PROJECT_ROOT_JSON__ || path.resolve(process.resourcesPath || app.getAppPath(), "..", "..", "..");
+			const target = process.env.UNIFYHUB_TARGET || __UNIFYHUB_TARGET_ID_JSON__ || "dummy";
+			const targetRoot = process.env.UNIFYHUB_TARGET_ROOT || __UNIFYHUB_TARGET_ROOT_JSON__ || path.dirname(process.execPath);
+			const slug = path.resolve(targetRoot)
+				.replace(/^[\\/]+/, "")
+				.replace(/[:\\/]+/g, "-")
+				.replace(/\s+/g, "-")
+				.replace(/-+/g, "-")
+				.replace(/^-+|-+$/g, "")
+				.toLowerCase();
+			const statePath = path.join(app.getPath("appData"), "UnifyHub", "installs", slug, "state.json");
+			const legacyStatePath = path.join(projectRoot, "state", `${target}.json`);
+			const finalStatePath = fs.existsSync(statePath) ? statePath : legacyStatePath;
+			const state = JSON.parse(fs.readFileSync(finalStatePath, "utf8").replace(/^\uFEFF/, ""));
+			return { ...defaults, enabled: state.enabled?.devtools === true, ...(state.config?.devtools || {}) };
+		} catch {
+			return defaults;
+		}
+	}
+	function installUnifyHubContextMenu() {
+		const marker = Symbol.for("unifyhub.contextMenuInstalled");
+		const attach = (win) => {
+			if (!win?.webContents || win.isDestroyed?.()) return;
+			const webContents = win.webContents;
+			if (webContents[marker]) return;
+			webContents[marker] = true;
+			webContents.on("context-menu", (event, params = {}) => {
+				event.preventDefault();
+				const template = [];
+				if (params.isEditable) {
+					template.push(
+						{ role: "undo" },
+						{ role: "redo" },
+						{ type: "separator" },
+						{ role: "cut", enabled: params.editFlags?.canCut !== false },
+						{ role: "copy", enabled: params.editFlags?.canCopy !== false },
+						{ role: "paste", enabled: params.editFlags?.canPaste !== false },
+						{ role: "pasteAndMatchStyle", enabled: params.editFlags?.canPaste !== false },
+						{ role: "delete" },
+						{ type: "separator" },
+						{ role: "selectAll" }
+					);
+				} else {
+					template.push(
+						{ role: "copy", enabled: !!params.selectionText },
+						{ role: "selectAll" }
+					);
+				}
+				template.push(
+					{ type: "separator" },
+					{
+						label: "Inspect Element",
+						click() {
+							if (!webContents.isDevToolsOpened()) webContents.openDevTools({ mode: "detach" });
+							webContents.inspectElement(params.x || 0, params.y || 0);
+						}
+					}
+				);
+				Menu.buildFromTemplate(template).popup({ window: win, x: params.x, y: params.y });
+			});
+		};
+		app.on("browser-window-created", (_event, win) => attach(win));
+		for (const win of BrowserWindow.getAllWindows()) attach(win);
+	}
+	const config = readUnifyHubDevToolsConfig();
+	if (!config.enabled) return;
+	initElectronDebug({ isEnabled: true, showDevTools: !!config.openDevToolsOnStart, devToolsMode: "detach" });
+	if (config.enableRightClickInspect !== false) installUnifyHubContextMenu();
+})();

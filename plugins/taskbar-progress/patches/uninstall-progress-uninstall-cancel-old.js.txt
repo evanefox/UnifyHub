@@ -1,0 +1,8 @@
+if ((await Promise.all(editor.location.map((editorPath) => unityInstaller.uninstall(editor, new EditorApp({
+				editorPath,
+				version: editor.version,
+				architecture: editor.architecture
+			}).path)))).some((response) => response?.cancelled)) {
+				globalThis.__unifyHubTaskbarProgressForUninstall?.("cancel", uninstallProgressItem);
+				return { cancelled: true };
+			}

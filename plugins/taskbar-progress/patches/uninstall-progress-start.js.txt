@@ -1,0 +1,8 @@
+async uninstallEditor(editor) {
+		const uninstallProgressItem = {
+			version: editor?.version,
+			architecture: editor?.architecture,
+			location: editor?.location
+		};
+		globalThis.__unifyHubTaskbarProgressForUninstall?.("start", uninstallProgressItem);
+		try {

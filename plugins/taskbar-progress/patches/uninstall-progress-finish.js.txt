@@ -1,0 +1,2 @@
+await this.editorList.removeInstalledEditor(editor);
+			globalThis.__unifyHubTaskbarProgressForUninstall?.("finish", uninstallProgressItem);
